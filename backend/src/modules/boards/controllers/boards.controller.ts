@@ -28,13 +28,13 @@ export class BoardsController {
     @Body() createBoardDto: CreateBoardDto,
     @Request() req,
   ): Promise<BoardResponseDto> {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.boardsService.createBoard(createBoardDto, userId);
   }
 
   @Get()
   async getAllUserBoards(@Request() req): Promise<BoardResponseDto[]> {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.boardsService.getAllUserBoards(userId);
   }
 
@@ -43,7 +43,7 @@ export class BoardsController {
     @Param('id') boardId: string,
     @Request() req,
   ): Promise<BoardResponseDto> {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.boardsService.getBoardById(boardId, userId);
   }
 
@@ -53,14 +53,14 @@ export class BoardsController {
     @Body() updateBoardDto: UpdateBoardDto,
     @Request() req,
   ): Promise<BoardResponseDto> {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.boardsService.updateBoard(boardId, updateBoardDto, userId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBoard(@Param('id') boardId: string, @Request() req): Promise<void> {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     await this.boardsService.deleteBoard(boardId, userId);
   }
 }
