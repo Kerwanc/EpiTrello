@@ -42,9 +42,20 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({
-        message: 'An error occurred',
+        message: 'Network error. Please check your connection.',
       }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      
+      let errorMessage = error.message || `HTTP ${response.status}`;
+      
+      if (response.status === 401 && endpoint.includes('/auth/login')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (response.status === 409) {
+        errorMessage = error.message || 'This resource already exists.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+      
+      throw new Error(errorMessage);
     }
 
     if (response.status === 204) {
