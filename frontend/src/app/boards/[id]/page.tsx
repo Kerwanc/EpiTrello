@@ -118,7 +118,7 @@ export default function BoardDetailPage() {
     }
 
     try {
-      await apiClient.deleteList(listId);
+      await apiClient.deleteList(listId, boardId);
       setLists(lists.filter((l) => l.id !== listId));
     } catch (err: any) {
       setError(err.message || 'Failed to delete list');
@@ -131,7 +131,7 @@ export default function BoardDetailPage() {
     }
 
     try {
-      await apiClient.deleteCard(cardId);
+      await apiClient.deleteCard(cardId, listId);
       setLists(
         lists.map((l) =>
           l.id === listId
