@@ -103,6 +103,11 @@ export class CardsService {
       );
     }
 
+    if (updateCardDto.listId !== undefined && updateCardDto.listId !== card.listId) {
+      await this.verifyListOwnership(updateCardDto.listId, userId);
+      card.listId = updateCardDto.listId;
+    }
+
     if (updateCardDto.dueDate !== undefined) {
       card.dueDate = updateCardDto.dueDate
         ? new Date(updateCardDto.dueDate)
