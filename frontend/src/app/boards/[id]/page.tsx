@@ -148,12 +148,10 @@ export default function BoardDetailPage() {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId, type } = result;
 
-    // If dropped outside a valid droppable area
     if (!destination) {
       return;
     }
 
-    // If dropped in the same position
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
@@ -161,32 +159,26 @@ export default function BoardDetailPage() {
       return;
     }
 
-    // Handle card dragging (we'll implement list dragging in Phase 4)
     if (type === 'card') {
       const sourceListId = source.droppableId;
       const destListId = destination.droppableId;
       
-      // Find source and destination lists
       const sourceList = lists.find((l) => l.id === sourceListId);
       const destList = lists.find((l) => l.id === destListId);
       
       if (!sourceList || !destList) return;
 
-      // Find the card being moved
       const movedCard = sourceList.cards.find((c) => c.id === draggableId);
       if (!movedCard) return;
 
-      // Create new lists array for optimistic update
       const newLists = [...lists];
       
       if (sourceListId === destListId) {
-        // Moving within the same list - reorder cards
         const listIndex = newLists.findIndex((l) => l.id === sourceListId);
         const newCards = Array.from(sourceList.cards);
         newCards.splice(source.index, 1);
         newCards.splice(destination.index, 0, movedCard);
         
-        // Update positions for all cards in the list
         const updatedCards = newCards.map((card, index) => ({
           ...card,
           position: index,
@@ -194,10 +186,8 @@ export default function BoardDetailPage() {
         
         newLists[listIndex] = { ...sourceList, cards: updatedCards };
         
-        // Optimistically update UI
         setLists(newLists);
         
-        // Update positions in backend
         try {
           await Promise.all(
             updatedCards.map((card) =>
@@ -206,23 +196,18 @@ export default function BoardDetailPage() {
           );
         } catch (err: any) {
           setError(err.message || 'Failed to update card positions');
-          // Revert on error
           fetchBoardData();
         }
       } else {
-        // Moving to a different list
         const sourceListIndex = newLists.findIndex((l) => l.id === sourceListId);
         const destListIndex = newLists.findIndex((l) => l.id === destListId);
         
-        // Remove from source list
         const newSourceCards = Array.from(sourceList.cards);
         newSourceCards.splice(source.index, 1);
         
-        // Add to destination list
         const newDestCards = Array.from(destList.cards);
         newDestCards.splice(destination.index, 0, { ...movedCard, listId: destListId });
         
-        // Update positions for both lists
         const updatedSourceCards = newSourceCards.map((card, index) => ({
           ...card,
           position: index,
@@ -236,15 +221,11 @@ export default function BoardDetailPage() {
         newLists[sourceListIndex] = { ...sourceList, cards: updatedSourceCards };
         newLists[destListIndex] = { ...destList, cards: updatedDestCards };
         
-        // Optimistically update UI
         setLists(newLists);
         
-        // Update in backend
         try {
-          // First move the card to the new list
           await apiClient.moveCard(movedCard.id, sourceListId, destListId, destination.index);
           
-          // Then update all affected card positions
           const updatePromises = [
             ...updatedSourceCards.map((card) =>
               apiClient.updateCardPosition(card.id, sourceListId, card.position)
@@ -259,7 +240,6 @@ export default function BoardDetailPage() {
           await Promise.all(updatePromises);
         } catch (err: any) {
           setError(err.message || 'Failed to move card');
-          // Revert on error
           fetchBoardData();
         }
       }
