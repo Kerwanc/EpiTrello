@@ -10,7 +10,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading...</div>
+        <div className="text-gray-800">Loading...</div>
       </div>
     );
   }
@@ -21,7 +21,7 @@ export default function Home() {
         <h1 className="text-6xl font-bold text-gray-900 mb-6">
           Welcome to <span className="text-blue-600">EpiTrello</span>
         </h1>
-        <p className="text-xl text-gray-600 mb-12">
+        <p className="text-xl text-gray-700 mb-12">
           Organize your tasks, collaborate with your team, and get more done.
         </p>
 
@@ -47,22 +47,22 @@ export default function Home() {
         <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-6">
             <div className="text-4xl mb-4">📋</div>
-            <h3 className="text-lg font-semibold mb-2">Organize Tasks</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Organize Tasks</h3>
+            <p className="text-gray-700">
               Create boards, lists, and cards to organize your work
             </p>
           </div>
           <div className="p-6">
             <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-lg font-semibold mb-2">Collaborate</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Collaborate</h3>
+            <p className="text-gray-700">
               Share boards with your team and work together
             </p>
           </div>
           <div className="p-6">
             <div className="text-4xl mb-4">✅</div>
-            <h3 className="text-lg font-semibold mb-2">Get Things Done</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Things Done</h3>
+            <p className="text-gray-700">
               Track progress and complete tasks efficiently
             </p>
           </div>
