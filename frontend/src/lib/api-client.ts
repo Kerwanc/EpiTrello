@@ -1,3 +1,5 @@
+import { User, Board, List, Card, AuthResponse } from '@/types';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 class ApiClient {
@@ -52,78 +54,78 @@ class ApiClient {
     return response.json();
   }
 
-  async register(data: { username: string; email: string; password: string }) {
-    return this.request('/auth/register', {
+  async register(data: { username: string; email: string; password: string }): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     }, false);
   }
 
-  async login(data: { email: string; password: string }) {
-    return this.request('/auth/login', {
+  async login(data: { email: string; password: string }): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     }, false);
   }
 
-  async getMe() {
-    return this.request('/auth/me');
+  async getMe(): Promise<User> {
+    return this.request<User>('/auth/me');
   }
 
-  async getBoards() {
-    return this.request('/boards');
+  async getBoards(): Promise<Board[]> {
+    return this.request<Board[]>('/boards');
   }
 
-  async getBoard(id: string) {
-    return this.request(`/boards/${id}`);
+  async getBoard(id: string): Promise<Board> {
+    return this.request<Board>(`/boards/${id}`);
   }
 
-  async createBoard(data: { title: string; description?: string; thumbnail?: string }) {
-    return this.request('/boards', {
+  async createBoard(data: { title: string; description?: string; thumbnail?: string }): Promise<Board> {
+    return this.request<Board>('/boards', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateBoard(id: string, data: { title?: string; description?: string; thumbnail?: string }) {
-    return this.request(`/boards/${id}`, {
+  async updateBoard(id: string, data: { title?: string; description?: string; thumbnail?: string }): Promise<Board> {
+    return this.request<Board>(`/boards/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteBoard(id: string) {
-    return this.request(`/boards/${id}`, {
+  async deleteBoard(id: string): Promise<void> {
+    return this.request<void>(`/boards/${id}`, {
       method: 'DELETE',
     });
   }
 
-  async getLists(boardId: string) {
-    return this.request(`/boards/${boardId}/lists`);
+  async getLists(boardId: string): Promise<List[]> {
+    return this.request<List[]>(`/boards/${boardId}/lists`);
   }
 
-  async createList(boardId: string, data: { title: string; position?: number }) {
-    return this.request(`/boards/${boardId}/lists`, {
+  async createList(boardId: string, data: { title: string; position?: number }): Promise<List> {
+    return this.request<List>(`/boards/${boardId}/lists`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateList(listId: string, data: { title?: string; position?: number }) {
-    return this.request(`/boards/:boardId/lists/${listId}`, {
+  async updateList(listId: string, data: { title?: string; position?: number }): Promise<List> {
+    return this.request<List>(`/boards/:boardId/lists/${listId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteList(listId: string) {
-    return this.request(`/boards/:boardId/lists/${listId}`, {
+  async deleteList(listId: string): Promise<void> {
+    return this.request<void>(`/boards/:boardId/lists/${listId}`, {
       method: 'DELETE',
     });
   }
 
-  async getCards(listId: string) {
-    return this.request(`/lists/${listId}/cards`);
+  async getCards(listId: string): Promise<Card[]> {
+    return this.request<Card[]>(`/lists/${listId}/cards`);
   }
 
   async createCard(listId: string, data: { 
@@ -132,8 +134,8 @@ class ApiClient {
     dueDate?: string;
     tags?: string[];
     position?: number;
-  }) {
-    return this.request(`/lists/${listId}/cards`, {
+  }): Promise<Card> {
+    return this.request<Card>(`/lists/${listId}/cards`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -145,15 +147,15 @@ class ApiClient {
     dueDate?: string;
     tags?: string[];
     position?: number;
-  }) {
-    return this.request(`/lists/:listId/cards/${cardId}`, {
+  }): Promise<Card> {
+    return this.request<Card>(`/lists/:listId/cards/${cardId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteCard(cardId: string) {
-    return this.request(`/lists/:listId/cards/${cardId}`, {
+  async deleteCard(cardId: string): Promise<void> {
+    return this.request<void>(`/lists/:listId/cards/${cardId}`, {
       method: 'DELETE',
     });
   }
