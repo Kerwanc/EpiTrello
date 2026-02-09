@@ -159,6 +159,31 @@ export default function BoardDetailPage() {
       return;
     }
 
+    if (type === 'list') {
+      const newLists = Array.from(lists);
+      const [movedList] = newLists.splice(source.index, 1);
+      newLists.splice(destination.index, 0, movedList);
+      
+      const updatedLists = newLists.map((list, index) => ({
+        ...list,
+        position: index,
+      }));
+      
+      setLists(updatedLists);
+      
+      try {
+        await Promise.all(
+          updatedLists.map((list) =>
+            apiClient.updateListPosition(list.id, boardId, list.position)
+          )
+        );
+      } catch (err: any) {
+        setError(err.message || 'Failed to update list positions');
+        fetchBoardData();
+      }
+      return;
+    }
+
     if (type === 'card') {
       const sourceListId = source.droppableId;
       const destListId = destination.droppableId;
@@ -289,164 +314,188 @@ export default function BoardDetailPage() {
 
       <div className="p-6 overflow-x-auto">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 min-h-[calc(100vh-200px)]">
-            {lists.map((list) => (
-              <Droppable droppableId={list.id} type="card" key={list.id}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0 flex flex-col max-h-[calc(100vh-200px)] ${
-                      snapshot.isDraggingOver ? 'bg-gray-200' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-gray-900">{list.title}</h2>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteList(list.id)}
+          <Droppable droppableId="all-lists" direction="horizontal" type="list">
+            {(provided) => (
+              <div 
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex gap-4 min-h-[calc(100vh-200px)]"
+              >
+                {lists.map((list, index) => (
+                  <Draggable key={list.id} draggableId={list.id} index={index}>
+                    {(listDraggableProvided, listDraggableSnapshot) => (
+                      <div
+                        ref={listDraggableProvided.innerRef}
+                        {...listDraggableProvided.draggableProps}
+                        className={`w-80 flex-shrink-0 ${
+                          listDraggableSnapshot.isDragging ? 'opacity-70' : ''
+                        }`}
                       >
-                        Delete
-                      </Button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-                      {list.cards.map((card, index) => (
-                        <Draggable key={card.id} draggableId={card.id} index={index}>
-                          {(provided, snapshot) => (
+                        <Droppable droppableId={list.id} type="card">
+                          {(cardDroppableProvided, cardDroppableSnapshot) => (
                             <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow ${
-                                snapshot.isDragging ? 'opacity-50 rotate-2' : ''
+                              ref={cardDroppableProvided.innerRef}
+                              {...cardDroppableProvided.droppableProps}
+                              className={`bg-gray-100 rounded-lg p-4 flex flex-col max-h-[calc(100vh-200px)] ${
+                                cardDroppableSnapshot.isDraggingOver ? 'bg-gray-200' : ''
                               }`}
                             >
-                              <div className="flex items-start justify-between">
-                                <h3 className="font-medium text-gray-900 flex-1">{card.title}</h3>
-                                <button
-                                  onClick={() => handleDeleteCard(list.id, card.id)}
-                                  className="text-gray-400 hover:text-red-600 ml-2"
+                              <div 
+                                {...listDraggableProvided.dragHandleProps}
+                                className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing"
+                              >
+                                <h2 className="text-lg font-semibold text-gray-900">{list.title}</h2>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteList(list.id)}
                                 >
-                                  ×
-                                </button>
+                                  Delete
+                                </Button>
                               </div>
-                              {card.description && (
-                                <p className="text-sm text-gray-600 mt-2">{card.description}</p>
-                              )}
-                              {card.dueDate && (
-                                <p className="text-xs text-gray-500 mt-2">
-                                  Due: {new Date(card.dueDate).toLocaleDateString()}
-                                </p>
-                              )}
-                              {card.tags && card.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {card.tags.map((tag, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+
+                              <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                                {list.cards.map((card, index) => (
+                                  <Draggable key={card.id} draggableId={card.id} index={index}>
+                                    {(cardDraggableProvided, cardDraggableSnapshot) => (
+                                      <div
+                                        ref={cardDraggableProvided.innerRef}
+                                        {...cardDraggableProvided.draggableProps}
+                                        {...cardDraggableProvided.dragHandleProps}
+                                        className={`bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${
+                                          cardDraggableSnapshot.isDragging ? 'opacity-50 rotate-2' : ''
+                                        }`}
+                                      >
+                                        <div className="flex items-start justify-between">
+                                          <h3 className="font-medium text-gray-900 flex-1">{card.title}</h3>
+                                          <button
+                                            onClick={() => handleDeleteCard(list.id, card.id)}
+                                            className="text-gray-400 hover:text-red-600 ml-2"
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+                                        {card.description && (
+                                          <p className="text-sm text-gray-600 mt-2">{card.description}</p>
+                                        )}
+                                        {card.dueDate && (
+                                          <p className="text-xs text-gray-500 mt-2">
+                                            Due: {new Date(card.dueDate).toLocaleDateString()}
+                                          </p>
+                                        )}
+                                        {card.tags && card.tags.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 mt-2">
+                                            {card.tags.map((tag, idx) => (
+                                              <span
+                                                key={idx}
+                                                className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                                              >
+                                                {tag}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                ))}
+                                {cardDroppableProvided.placeholder}
+                              </div>
+
+                              {creatingCardInList === list.id ? (
+                                <div className="bg-white rounded-lg p-3 shadow-sm">
+                                  <input
+                                    type="text"
+                                    placeholder="Card title"
+                                    value={newCardData.title}
+                                    onChange={(e) =>
+                                      setNewCardData({ ...newCardData, title: e.target.value })
+                                    }
+                                    className="w-full px-2 py-1 bg-white border border-gray-300 rounded mb-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    autoFocus
+                                  />
+                                  <textarea
+                                    placeholder="Description (optional)"
+                                    value={newCardData.description}
+                                    onChange={(e) =>
+                                      setNewCardData({ ...newCardData, description: e.target.value })
+                                    }
+                                    className="w-full px-2 py-1 bg-white border border-gray-300 rounded mb-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    rows={2}
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleCreateCard(list.id)}
                                     >
-                                      {tag}
-                                    </span>
-                                  ))}
+                                      Add Card
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        setCreatingCardInList(null);
+                                        setNewCardData({ title: '', description: '' });
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
                                 </div>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setCreatingCardInList(list.id)}
+                                >
+                                  + Add a card
+                                </Button>
                               )}
                             </div>
                           )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-
-                    {creatingCardInList === list.id ? (
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <input
-                          type="text"
-                          placeholder="Card title"
-                          value={newCardData.title}
-                          onChange={(e) =>
-                            setNewCardData({ ...newCardData, title: e.target.value })
-                          }
-                          className="w-full px-2 py-1 bg-white border border-gray-300 rounded mb-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          autoFocus
-                        />
-                        <textarea
-                          placeholder="Description (optional)"
-                          value={newCardData.description}
-                          onChange={(e) =>
-                            setNewCardData({ ...newCardData, description: e.target.value })
-                          }
-                          className="w-full px-2 py-1 bg-white border border-gray-300 rounded mb-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          rows={2}
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleCreateCard(list.id)}
-                          >
-                            Add Card
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setCreatingCardInList(null);
-                              setNewCardData({ title: '', description: '' });
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                        </Droppable>
                       </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCreatingCardInList(list.id)}
-                      >
-                        + Add a card
-                      </Button>
                     )}
-                  </div>
-                )}
-              </Droppable>
-            ))}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
 
-            {isCreatingList ? (
-              <div className="bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0">
-                <Input
-                  type="text"
-                  placeholder="Enter list title..."
-                  value={newListTitle}
-                  onChange={(e) => setNewListTitle(e.target.value)}
-                  autoFocus
-                />
-                <div className="flex gap-2 mt-3">
-                  <Button size="sm" onClick={handleCreateList}>
-                    Add List
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsCreatingList(false);
-                      setNewListTitle('');
-                    }}
+                {isCreatingList ? (
+                  <div className="bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0">
+                    <Input
+                      type="text"
+                      placeholder="Enter list title..."
+                      value={newListTitle}
+                      onChange={(e) => setNewListTitle(e.target.value)}
+                      autoFocus
+                    />
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" onClick={handleCreateList}>
+                        Add List
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setIsCreatingList(false);
+                          setNewListTitle('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsCreatingList(true)}
+                    className="bg-white/30 hover:bg-white/40 rounded-lg p-4 w-80 flex-shrink-0 text-white font-medium transition-colors"
                   >
-                    Cancel
-                  </Button>
-                </div>
+                    + Add another list
+                  </button>
+                )}
               </div>
-            ) : (
-              <button
-                onClick={() => setIsCreatingList(true)}
-                className="bg-white/30 hover:bg-white/40 rounded-lg p-4 w-80 flex-shrink-0 text-white font-medium transition-colors"
-              >
-                + Add another list
-              </button>
             )}
-          </div>
+          </Droppable>
         </DragDropContext>
       </div>
     </div>
