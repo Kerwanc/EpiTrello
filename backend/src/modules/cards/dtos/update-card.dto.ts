@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsArray,
   IsDateString,
+  IsUUID,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -31,4 +32,8 @@ export class UpdateCardDto {
   @IsInt()
   @Min(0)
   position?: number;
+
+  @IsOptional()
+  @IsUUID()
+  listId?: string;
 }
