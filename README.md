@@ -2,11 +2,11 @@
 
 A modern, full-stack Trello clone for task and project management. Built with Next.js, NestJS, PostgreSQL, and Docker.
 
-![Tech Stack](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
-![Tech Stack](https://img.shields.io/badge/NestJS-10-red?style=flat-square&logo=nestjs)
-![Tech Stack](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)
-![Tech Stack](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
-![Tech Stack](https://img.shields.io/badge/Docker-latest-blue?style=flat-square&logo=docker)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10-E0234E?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-latest-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 
 ## Features
 
-### Current Features (Milestone 1 - Completed)
+### Current Features
 
 - **User Authentication**
   - JWT-based authentication
@@ -57,11 +57,10 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 - **Modern UI/UX**
   - Responsive design with TailwindCSS v4
   - Clean, intuitive interface
-  - Accessible forms with validation
   - Error handling and user feedback
-  - Dark text on white inputs for readability
+  - Good color choice, not confusing
 
-### Upcoming Features (Milestone 2 & 3)
+### Upcoming Features
 
 - Drag & drop for cards and lists
 - Board sharing and permissions
