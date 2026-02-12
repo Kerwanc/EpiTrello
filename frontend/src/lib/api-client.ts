@@ -45,7 +45,6 @@ class ApiClient {
         message: 'Network error. Please check your connection.',
       }));
       
-      // Provide more user-friendly error messages
       let errorMessage = error.message || `HTTP ${response.status}`;
       
       if (response.status === 401 && endpoint.includes('/auth/login')) {
@@ -123,15 +122,15 @@ class ApiClient {
     });
   }
 
-  async updateList(listId: string, data: { title?: string; position?: number }): Promise<List> {
-    return this.request<List>(`/boards/:boardId/lists/${listId}`, {
+  async updateList(listId: string, boardId: string, data: { title?: string; position?: number }): Promise<List> {
+    return this.request<List>(`/boards/${boardId}/lists/${listId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteList(listId: string): Promise<void> {
-    return this.request<void>(`/boards/:boardId/lists/${listId}`, {
+  async deleteList(listId: string, boardId: string): Promise<void> {
+    return this.request<void>(`/boards/${boardId}/lists/${listId}`, {
       method: 'DELETE',
     });
   }
@@ -153,21 +152,43 @@ class ApiClient {
     });
   }
 
-  async updateCard(cardId: string, data: {
+  async updateCard(cardId: string, listId: string, data: {
     title?: string;
     description?: string;
     dueDate?: string;
     tags?: string[];
     position?: number;
+    listId?: string;
   }): Promise<Card> {
-    return this.request<Card>(`/lists/:listId/cards/${cardId}`, {
+    return this.request<Card>(`/lists/${listId}/cards/${cardId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteCard(cardId: string): Promise<void> {
-    return this.request<void>(`/lists/:listId/cards/${cardId}`, {
+  async moveCard(cardId: string, sourceListId: string, targetListId: string, position: number): Promise<Card> {
+    return this.request<Card>(`/lists/${sourceListId}/cards/${cardId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ listId: targetListId, position }),
+    });
+  }
+
+  async updateCardPosition(cardId: string, listId: string, position: number): Promise<Card> {
+    return this.request<Card>(`/lists/${listId}/cards/${cardId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ position }),
+    });
+  }
+
+  async updateListPosition(listId: string, boardId: string, position: number): Promise<List> {
+    return this.request<List>(`/boards/${boardId}/lists/${listId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ position }),
+    });
+  }
+
+  async deleteCard(cardId: string, listId: string): Promise<void> {
+    return this.request<void>(`/lists/${listId}/cards/${cardId}`, {
       method: 'DELETE',
     });
   }
