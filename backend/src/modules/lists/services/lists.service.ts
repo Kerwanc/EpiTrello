@@ -61,10 +61,7 @@ export class ListsService {
     return lists.map((list) => this.mapToListResponseDto(list));
   }
 
-  async getListById(
-    listId: string,
-    userId: string,
-  ): Promise<ListResponseDto> {
+  async getListById(listId: string, userId: string): Promise<ListResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
       relations: ['board'],

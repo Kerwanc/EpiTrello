@@ -27,7 +27,7 @@ class ApiClient {
   async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    includeAuth: boolean = true
+    includeAuth: boolean = true,
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers = this.getHeaders(includeAuth);
@@ -44,17 +44,18 @@ class ApiClient {
       const error = await response.json().catch(() => ({
         message: 'Network error. Please check your connection.',
       }));
-      
+
       let errorMessage = error.message || `HTTP ${response.status}`;
-      
+
       if (response.status === 401 && endpoint.includes('/auth/login')) {
-        errorMessage = 'Invalid email or password. Please check your credentials.';
+        errorMessage =
+          'Invalid email or password. Please check your credentials.';
       } else if (response.status === 409) {
         errorMessage = error.message || 'This resource already exists.';
       } else if (response.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -65,18 +66,33 @@ class ApiClient {
     return response.json();
   }
 
-  async register(data: { username: string; email: string; password: string }): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, false);
+  async register(data: {
+    username: string;
+    email: string;
+    password: string;
+  }): Promise<AuthResponse> {
+    return this.request<AuthResponse>(
+      '/auth/register',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+      false,
+    );
   }
 
-  async login(data: { email: string; password: string }): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, false);
+  async login(data: {
+    email: string;
+    password: string;
+  }): Promise<AuthResponse> {
+    return this.request<AuthResponse>(
+      '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+      false,
+    );
   }
 
   async getMe(): Promise<User> {
@@ -91,14 +107,21 @@ class ApiClient {
     return this.request<Board>(`/boards/${id}`);
   }
 
-  async createBoard(data: { title: string; description?: string; thumbnail?: string }): Promise<Board> {
+  async createBoard(data: {
+    title: string;
+    description?: string;
+    thumbnail?: string;
+  }): Promise<Board> {
     return this.request<Board>('/boards', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateBoard(id: string, data: { title?: string; description?: string; thumbnail?: string }): Promise<Board> {
+  async updateBoard(
+    id: string,
+    data: { title?: string; description?: string; thumbnail?: string },
+  ): Promise<Board> {
     return this.request<Board>(`/boards/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -115,14 +138,21 @@ class ApiClient {
     return this.request<List[]>(`/boards/${boardId}/lists`);
   }
 
-  async createList(boardId: string, data: { title: string; position?: number }): Promise<List> {
+  async createList(
+    boardId: string,
+    data: { title: string; position?: number },
+  ): Promise<List> {
     return this.request<List>(`/boards/${boardId}/lists`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateList(listId: string, boardId: string, data: { title?: string; position?: number }): Promise<List> {
+  async updateList(
+    listId: string,
+    boardId: string,
+    data: { title?: string; position?: number },
+  ): Promise<List> {
     return this.request<List>(`/boards/${boardId}/lists/${listId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -139,48 +169,68 @@ class ApiClient {
     return this.request<Card[]>(`/lists/${listId}/cards`);
   }
 
-  async createCard(listId: string, data: { 
-    title: string; 
-    description?: string; 
-    dueDate?: string;
-    tags?: string[];
-    position?: number;
-  }): Promise<Card> {
+  async createCard(
+    listId: string,
+    data: {
+      title: string;
+      description?: string;
+      dueDate?: string;
+      tags?: string[];
+      position?: number;
+    },
+  ): Promise<Card> {
     return this.request<Card>(`/lists/${listId}/cards`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateCard(cardId: string, listId: string, data: {
-    title?: string;
-    description?: string;
-    dueDate?: string;
-    tags?: string[];
-    position?: number;
-    listId?: string;
-  }): Promise<Card> {
+  async updateCard(
+    cardId: string,
+    listId: string,
+    data: {
+      title?: string;
+      description?: string;
+      dueDate?: string;
+      tags?: string[];
+      position?: number;
+      listId?: string;
+    },
+  ): Promise<Card> {
     return this.request<Card>(`/lists/${listId}/cards/${cardId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async moveCard(cardId: string, sourceListId: string, targetListId: string, position: number): Promise<Card> {
+  async moveCard(
+    cardId: string,
+    sourceListId: string,
+    targetListId: string,
+    position: number,
+  ): Promise<Card> {
     return this.request<Card>(`/lists/${sourceListId}/cards/${cardId}`, {
       method: 'PATCH',
       body: JSON.stringify({ listId: targetListId, position }),
     });
   }
 
-  async updateCardPosition(cardId: string, listId: string, position: number): Promise<Card> {
+  async updateCardPosition(
+    cardId: string,
+    listId: string,
+    position: number,
+  ): Promise<Card> {
     return this.request<Card>(`/lists/${listId}/cards/${cardId}`, {
       method: 'PATCH',
       body: JSON.stringify({ position }),
     });
   }
 
-  async updateListPosition(listId: string, boardId: string, position: number): Promise<List> {
+  async updateListPosition(
+    listId: string,
+    boardId: string,
+    position: number,
+  ): Promise<List> {
     return this.request<List>(`/boards/${boardId}/lists/${listId}`, {
       method: 'PATCH',
       body: JSON.stringify({ position }),

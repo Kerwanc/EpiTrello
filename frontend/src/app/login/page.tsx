@@ -25,7 +25,9 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/boards');
     } catch (err: any) {
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      setError(
+        err.message || 'Failed to login. Please check your credentials.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +37,9 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome Back
+          </h1>
           <p className="text-gray-700">Log in to your EpiTrello account</p>
         </div>
 
@@ -79,7 +83,10 @@ export default function LoginPage() {
         <div className="mt-6 text-center">
           <p className="text-gray-700">
             Don't have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link
+              href="/register"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
               Sign up
             </Link>
           </p>

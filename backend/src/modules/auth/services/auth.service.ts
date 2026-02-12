@@ -77,7 +77,7 @@ export class AuthService {
   }
 
   private mapUserToDto(user: any) {
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 }

@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { apiClient } from '@/lib/api-client';
 import { User, AuthResponse } from '@/types';
 
@@ -9,7 +15,11 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string,
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -35,13 +45,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = (await apiClient.login({ email, password })) as AuthResponse;
+    const response = (await apiClient.login({
+      email,
+      password,
+    })) as AuthResponse;
     localStorage.setItem('token', response.accessToken);
     setUser(response.user);
   };
 
-  const register = async (username: string, email: string, password: string) => {
-    const response = (await apiClient.register({ username, email, password })) as AuthResponse;
+  const register = async (
+    username: string,
+    email: string,
+    password: string,
+  ) => {
+    const response = (await apiClient.register({
+      username,
+      email,
+      password,
+    })) as AuthResponse;
     localStorage.setItem('token', response.accessToken);
     setUser(response.user);
   };

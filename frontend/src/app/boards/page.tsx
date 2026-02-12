@@ -92,9 +92,7 @@ export default function BoardsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">My Boards</h1>
-        <Button onClick={() => setIsModalOpen(true)}>
-          + Create New Board
-        </Button>
+        <Button onClick={() => setIsModalOpen(true)}>+ Create New Board</Button>
       </div>
 
       {error && (
@@ -105,7 +103,9 @@ export default function BoardsPage() {
 
       {boards.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-600 mb-4">No boards yet. Create your first board to get started!</p>
+          <p className="text-gray-600 mb-4">
+            No boards yet. Create your first board to get started!
+          </p>
           <Button onClick={() => setIsModalOpen(true)}>
             Create Your First Board
           </Button>
@@ -113,7 +113,10 @@ export default function BoardsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {boards.map((board) => (
-            <Card key={board.id} className="cursor-pointer hover:shadow-lg transition-shadow">
+            <Card
+              key={board.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+            >
               <div
                 className="h-32 bg-gradient-to-br from-blue-400 to-blue-600 rounded-t-lg mb-4"
                 onClick={() => router.push(`/boards/${board.id}`)}
@@ -122,9 +125,13 @@ export default function BoardsPage() {
                 className="px-4 pb-4"
                 onClick={() => router.push(`/boards/${board.id}`)}
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{board.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {board.title}
+                </h3>
                 {board.description && (
-                  <p className="text-gray-600 text-sm line-clamp-2">{board.description}</p>
+                  <p className="text-gray-600 text-sm line-clamp-2">
+                    {board.description}
+                  </p>
                 )}
               </div>
               <div className="px-4 pb-4 pt-2 border-t border-gray-100">
@@ -147,13 +154,17 @@ export default function BoardsPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Create New Board</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Create New Board
+            </h2>
             <form onSubmit={handleCreateBoard}>
               <Input
                 label="Board Title"
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="Enter board title"
                 required
               />
@@ -163,7 +174,9 @@ export default function BoardsPage() {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   placeholder="Enter board description"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
