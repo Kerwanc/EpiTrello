@@ -48,7 +48,9 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Create Account
+          </h1>
           <p className="text-gray-700">Sign up for EpiTrello</p>
         </div>
 
@@ -112,7 +114,10 @@ export default function RegisterPage() {
         <div className="mt-6 text-center">
           <p className="text-gray-700">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link
+              href="/login"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
               Log in
             </Link>
           </p>
