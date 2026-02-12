@@ -27,7 +27,10 @@ export class UserRepository {
     return this.repository.save(newUser);
   }
 
-  async updateUser(id: string, updateData: Partial<User>): Promise<User | null> {
+  async updateUser(
+    id: string,
+    updateData: Partial<User>,
+  ): Promise<User | null> {
     await this.repository.update(id, updateData);
     return this.findById(id);
   }
@@ -37,4 +40,3 @@ export class UserRepository {
     return result.affected ? result.affected > 0 : false;
   }
 }
-

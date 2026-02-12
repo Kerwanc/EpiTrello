@@ -39,7 +39,10 @@ export class BoardsService {
     return boards.map((board) => this.mapToBoardResponseDto(board));
   }
 
-  async getBoardById(boardId: string, userId: string): Promise<BoardResponseDto> {
+  async getBoardById(
+    boardId: string,
+    userId: string,
+  ): Promise<BoardResponseDto> {
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
     });
@@ -69,7 +72,9 @@ export class BoardsService {
     }
 
     if (board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have permission to update this board');
+      throw new ForbiddenException(
+        'You do not have permission to update this board',
+      );
     }
 
     Object.assign(board, updateBoardDto);
@@ -88,7 +93,9 @@ export class BoardsService {
     }
 
     if (board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have permission to delete this board');
+      throw new ForbiddenException(
+        'You do not have permission to delete this board',
+      );
     }
 
     await this.boardRepository.remove(board);

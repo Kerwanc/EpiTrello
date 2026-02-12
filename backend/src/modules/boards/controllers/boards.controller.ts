@@ -59,7 +59,10 @@ export class BoardsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBoard(@Param('id') boardId: string, @Request() req): Promise<void> {
+  async deleteBoard(
+    @Param('id') boardId: string,
+    @Request() req,
+  ): Promise<void> {
     const userId = req.user.id;
     await this.boardsService.deleteBoard(boardId, userId);
   }
