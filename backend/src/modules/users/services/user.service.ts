@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { UserRepository } from '../repositories/user.repository';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dtos/create-user.dto';
@@ -68,7 +64,7 @@ export class UserService {
   }
 
   private mapToDto(user: User): UserDto {
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { ...userWithoutPassword } = user;
     return userWithoutPassword as UserDto;
   }
 }
