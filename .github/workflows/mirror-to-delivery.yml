@@ -1,0 +1,23 @@
+name: Mirror to Delivery Repository
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    name: Mirror main branch to delivery repo
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Mirror to Epitech delivery repository
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: "git@github.com:${{ vars.MIRROR_URL }}.git"
+          ssh_private_key: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
