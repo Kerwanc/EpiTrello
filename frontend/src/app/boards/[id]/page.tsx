@@ -175,21 +175,23 @@ export default function BoardDetailPage() {
   ) => {
     try {
       setError(null);
-      const updatedCard = await apiClient.updateCard(cardId, listId, updatedData);
-      
+      const updatedCard = await apiClient.updateCard(
+        cardId,
+        listId,
+        updatedData,
+      );
+
       setLists(
         lists.map((l) =>
           l.id === listId
             ? {
                 ...l,
-                cards: l.cards.map((c) =>
-                  c.id === cardId ? updatedCard : c,
-                ),
+                cards: l.cards.map((c) => (c.id === cardId ? updatedCard : c)),
               }
             : l,
         ),
       );
-      
+
       setEditingCard(null);
     } catch (err: any) {
       setError(err.message || 'Failed to update card');
