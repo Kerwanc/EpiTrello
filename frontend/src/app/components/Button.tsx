@@ -14,7 +14,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+    'font-bold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantStyles = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
