@@ -31,7 +31,7 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 
 - **User Authentication**
   - JWT-based authentication
-  - User registration with validation
+  - User registration
   - Secure login with password hashing
   - Protected routes and API endpoints
 
@@ -96,10 +96,10 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 ## Architecture
 
 ```
-┌─────────────────┐
-│   Browser       │
-│  (localhost:3000)│
-└────────┬────────┘
+┌──────────────────┐
+│   Browser        │
+│ (localhost:3000) │
+└────────┬─────────┘
          │ HTTP
          ▼
 ┌─────────────────┐
@@ -173,22 +173,12 @@ The easiest way to run EpiTrello is using Docker Compose:
    - Backend API: http://localhost:3001
    - PostgreSQL: localhost:5432
 
-3. **View logs**
-   ```bash
-   # All services
-   docker-compose logs -f
-
-   # Specific service
-   docker-compose logs -f frontend
-   docker-compose logs -f backend
-   ```
-
-4. **Stop services**
+3. **Stop services**
    ```bash
    docker-compose down
    ```
 
-5. **Rebuild after code changes**
+4. **Rebuild after code changes**
    ```bash
    # Rebuild specific service
    docker-compose build frontend
@@ -235,9 +225,8 @@ The easiest way to run EpiTrello is using Docker Compose:
      postgres:16-alpine
    ```
 
-5. **Run migrations** (TypeORM auto-sync is enabled in development)
 
-6. **Start the backend**
+5  . **Start the backend**
    ```bash
    pnpm run start:dev
    ```
@@ -322,9 +311,9 @@ repo/
 1. **Register**: `POST /auth/register`
    ```json
    {
-     "username": "johndoe",
-     "email": "john@example.com",
-     "password": "securepassword123"
+     "username": "user",
+     "email": "user@example.com",
+     "password": "testtest"
    }
    ```
 
@@ -334,8 +323,8 @@ repo/
      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
      "user": {
        "id": "uuid",
-       "username": "johndoe",
-       "email": "john@example.com",
+       "username": "user",
+       "email": "user@example.com",
        "createdAt": "2026-02-10T18:00:00Z",
        "updatedAt": "2026-02-10T18:00:00Z"
      }
@@ -345,8 +334,8 @@ repo/
 2. **Login**: `POST /auth/login`
    ```json
    {
-     "email": "john@example.com",
-     "password": "securepassword123"
+     "email": "user@example.com",
+     "password": "testtest"
    }
    ```
 
@@ -481,78 +470,3 @@ CREATE TABLE cards (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 ```
-
-## Troubleshooting
-
-### Frontend can't connect to backend
-
-**Problem**: "NetworkError when attempting to fetch resource"
-
-**Solution**: Ensure `NEXT_PUBLIC_API_URL` in `docker-compose.yml` is set to `http://localhost:3001` (not `http://backend:3001`). Rebuild frontend:
-```bash
-docker-compose build frontend
-docker-compose up -d frontend
-```
-
-### Database connection refused
-
-**Problem**: Backend can't connect to PostgreSQL
-
-**Solution**: 
-1. Check database is running: `docker-compose ps`
-2. Wait for database to be healthy: `docker-compose logs db`
-3. Verify database credentials in `docker-compose.yml`
-
-### Port already in use
-
-**Problem**: "Port 3000/3001/5432 is already allocated"
-
-**Solution**: Stop conflicting services or change ports in `docker-compose.yml`
-
-### Login shows "Invalid credentials" immediately
-
-**Problem**: User entered username instead of email
-
-**Solution**: The login form requires **email**, not username. Use the email you registered with.
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'feat: add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-### Commit Convention
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `style:` - Code style changes (formatting)
-- `refactor:` - Code refactoring
-- `test:` - Adding tests
-- `chore:` - Maintenance tasks
-
-## Project Timeline
-
-- **Milestone 1** (Nov 6 - Dec 15, 2025): Core features ✅ **COMPLETED**
-- **Milestone 2** (Dec 16 - Jan 26, 2026): Persistence & UX improvements
-- **Milestone 3** (Jan 27 - Feb 23, 2026): Finalization & polish
-
-## License
-
-This project is part of an academic program and is licensed under the MIT License.
-
-## Contact
-
-Project maintained by the EpiTrello team.
-
-For questions or issues, please open an issue on GitHub.
-
----
-
-**Built with ❤️ using Next.js, NestJS, and PostgreSQL**
