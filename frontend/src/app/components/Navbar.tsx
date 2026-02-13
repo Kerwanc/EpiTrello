@@ -8,7 +8,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-[#D9CDB5] shadow-sm border-b border-[#C4B89A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center">
@@ -20,12 +20,12 @@ export function Navbar() {
               <>
                 <Link
                   href="/boards"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-bold"
                 >
                   Boards
                 </Link>
                 <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-gray-700 font-bold">
                     {user?.username}
                   </span>
                   <Button variant="ghost" size="sm" onClick={logout}>

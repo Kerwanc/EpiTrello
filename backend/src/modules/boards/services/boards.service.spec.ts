@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { BoardsService } from './boards.service';
 import { Board } from '../entities/board.entity';
 import { CreateBoardDto } from '../dtos/create-board.dto';
