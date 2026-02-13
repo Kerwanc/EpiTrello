@@ -13,6 +13,7 @@ import { apiClient } from '@/lib/api-client';
 import { Board, List, Card } from '@/types';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import CardEditModal from '../../components/CardEditModal';
 
 interface ListWithCards extends List {
   cards: Card[];
@@ -39,6 +40,8 @@ export default function BoardDetailPage() {
     title: '',
     description: '',
   });
+
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -157,6 +160,39 @@ export default function BoardDetailPage() {
       );
     } catch (err: any) {
       setError(err.message || 'Failed to delete card');
+    }
+  };
+
+  const handleUpdateCard = async (
+    cardId: string,
+    listId: string,
+    updatedData: {
+      title: string;
+      description: string;
+      dueDate: string | undefined;
+      tags: string[] | undefined;
+    },
+  ) => {
+    try {
+      setError(null);
+      const updatedCard = await apiClient.updateCard(cardId, listId, updatedData);
+      
+      setLists(
+        lists.map((l) =>
+          l.id === listId
+            ? {
+                ...l,
+                cards: l.cards.map((c) =>
+                  c.id === cardId ? updatedCard : c,
+                ),
+              }
+            : l,
+        ),
+      );
+      
+      setEditingCard(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update card');
     }
   };
 
@@ -432,7 +468,8 @@ export default function BoardDetailPage() {
                                         ref={cardDraggableProvided.innerRef}
                                         {...cardDraggableProvided.draggableProps}
                                         {...cardDraggableProvided.dragHandleProps}
-                                        className={`bg-white rounded-lg p-3 transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                                        onClick={() => setEditingCard(card)}
+                                        className={`bg-white rounded-lg p-3 transition-all duration-150 cursor-pointer ${
                                           cardDraggableSnapshot.isDragging
                                             ? 'shadow-2xl ring-2 ring-blue-400 ring-opacity-50 rotate-2 scale-105 opacity-90'
                                             : 'shadow-sm hover:shadow-lg hover:ring-1 hover:ring-gray-200'
@@ -630,6 +667,16 @@ export default function BoardDetailPage() {
           </Droppable>
         </DragDropContext>
       </div>
+
+      {editingCard && (
+        <CardEditModal
+          card={editingCard}
+          onClose={() => setEditingCard(null)}
+          onSave={(updatedData) =>
+            handleUpdateCard(editingCard.id, editingCard.listId, updatedData)
+          }
+        />
+      )}
     </div>
   );
 }
