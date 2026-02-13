@@ -44,7 +44,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="p-6">
             <div className="text-4xl mb-4">📋</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -52,15 +52,6 @@ export default function Home() {
             </h3>
             <p className="text-gray-700">
               Create boards, lists, and cards to organize your work
-            </p>
-          </div>
-          <div className="p-6">
-            <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Collaborate
-            </h3>
-            <p className="text-gray-700">
-              Share boards with your team and work together
             </p>
           </div>
           <div className="p-6">

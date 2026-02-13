@@ -26,7 +26,7 @@ describe('BoardsService', () => {
     ownerId: 'user-uuid-123',
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
-    owner: null,
+    owner: null as any,
     lists: [],
   };
 
@@ -45,7 +45,6 @@ describe('BoardsService', () => {
     }).compile();
 
     boardsService = module.get<BoardsService>(BoardsService);
-    boardRepository = module.get<Repository<Board>>(getRepositoryToken(Board));
 
     jest.clearAllMocks();
   });
