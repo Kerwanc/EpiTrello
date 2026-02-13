@@ -9,8 +9,6 @@ import { LoginDto } from '../dtos/login.dto';
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let userService: UserService;
-  let jwtService: JwtService;
 
   const mockUserService = {
     createUser: jest.fn(),

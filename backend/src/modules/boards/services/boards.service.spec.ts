@@ -1,9 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import {
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { BoardsService } from './boards.service';
 import { Board } from '../entities/board.entity';
@@ -12,7 +9,6 @@ import { UpdateBoardDto } from '../dtos/update-board.dto';
 
 describe('BoardsService', () => {
   let boardsService: BoardsService;
-  let boardRepository: Repository<Board>;
 
   const mockBoardRepository = {
     create: jest.fn(),
