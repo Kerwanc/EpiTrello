@@ -27,6 +27,7 @@ describe('BoardsService', () => {
     updatedAt: new Date('2026-01-01'),
     owner: null as any,
     lists: [],
+    members: [],
   };
 
   const userId = 'user-uuid-123';

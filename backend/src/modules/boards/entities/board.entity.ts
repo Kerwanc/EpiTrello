@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { List } from '../../lists/entities/list.entity';
+import { BoardMember } from './board-member.entity';
 
 @Entity('boards')
 export class Board {
@@ -40,4 +41,7 @@ export class Board {
 
   @OneToMany(() => List, (list) => list.board)
   lists: List[];
+
+  @OneToMany(() => BoardMember, (member) => member.board)
+  members: BoardMember[];
 }
