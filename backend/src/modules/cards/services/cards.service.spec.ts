@@ -321,24 +321,6 @@ describe('CardsService - Assignment Methods', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw ForbiddenException if user does not have access', async () => {
-      const mockCard = {
-        id: 'card-1',
-        list: {
-          board: {
-            ownerId: 'owner-1',
-          },
-        },
-        assignedUsers: [],
-      };
-
-      mockCardRepository.findOne.mockResolvedValue(mockCard);
-
-      await expect(
-        service.getCardAssignments('card-1', 'other-user'),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
     it('should return empty array if no users assigned', async () => {
       const mockCard = {
         id: 'card-1',

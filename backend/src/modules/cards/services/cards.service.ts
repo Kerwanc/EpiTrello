@@ -36,7 +36,14 @@ export class CardsService {
     createCardDto: CreateCardDto,
     userId: string,
   ): Promise<CardResponseDto> {
-    await this.verifyListOwnership(listId, userId);
+    const list = await this.listRepository.findOne({
+      where: { id: listId },
+      relations: ['board'],
+    });
+
+    if (!list) {
+      throw new NotFoundException(`List with ID ${listId} not found`);
+    }
 
     let position = createCardDto.position;
     if (position === undefined) {
@@ -67,7 +74,15 @@ export class CardsService {
     listId: string,
     userId: string,
   ): Promise<CardAssignmentResponseDto[]> {
-    await this.verifyListOwnership(listId, userId);
+    // Permission check is handled by ResourcePermissionGuard
+    // Just verify list exists
+    const list = await this.listRepository.findOne({
+      where: { id: listId },
+    });
+
+    if (!list) {
+      throw new NotFoundException(`List with ID ${listId} not found`);
+    }
 
     const cards = await this.cardRepository.find({
       where: { listId },
@@ -91,9 +106,7 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-    if (card.list.board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this card');
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     return this.mapToCardAssignmentResponseDto(card);
   }
@@ -112,17 +125,26 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-    if (card.list.board.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to update this card',
-      );
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     if (
       updateCardDto.listId !== undefined &&
       updateCardDto.listId !== card.listId
     ) {
-      await this.verifyListOwnership(updateCardDto.listId, userId);
+      // Verify the new list exists and belongs to the same board
+      const newList = await this.listRepository.findOne({
+        where: { id: updateCardDto.listId },
+        relations: ['board'],
+      });
+
+      if (!newList) {
+        throw new NotFoundException(`List with ID ${updateCardDto.listId} not found`);
+      }
+
+      if (newList.boardId !== card.list.boardId) {
+        throw new BadRequestException('Cannot move card to a list in a different board');
+      }
+
       card.listId = updateCardDto.listId;
       (card as any).list = undefined;
     }
@@ -154,31 +176,9 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-    if (card.list.board.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this card',
-      );
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     await this.cardRepository.remove(card);
-  }
-
-  private async verifyListOwnership(
-    listId: string,
-    userId: string,
-  ): Promise<void> {
-    const list = await this.listRepository.findOne({
-      where: { id: listId },
-      relations: ['board'],
-    });
-
-    if (!list) {
-      throw new NotFoundException(`List with ID ${listId} not found`);
-    }
-
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this list');
-    }
   }
 
   private mapToCardResponseDto(card: Card): CardResponseDto {
@@ -291,9 +291,7 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-    if (card.list.board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this card');
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     return (card.assignedUsers || []).map((user) => ({
       id: user.id,

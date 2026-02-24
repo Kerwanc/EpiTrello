@@ -26,7 +26,13 @@ export class ListsService {
     createListDto: CreateListDto,
     userId: string,
   ): Promise<ListResponseDto> {
-    await this.verifyBoardOwnership(boardId, userId);
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
 
     let position = createListDto.position;
     if (position === undefined) {
@@ -52,7 +58,15 @@ export class ListsService {
     boardId: string,
     userId: string,
   ): Promise<ListResponseDto[]> {
-    await this.verifyBoardOwnership(boardId, userId);
+    // Permission check is handled by ResourcePermissionGuard
+    // Just verify board exists
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
 
     const lists = await this.listRepository.find({
       where: { boardId },
@@ -76,9 +90,7 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this list');
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     return this.mapToListWithCardsResponseDto(list);
   }
@@ -97,11 +109,7 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to update this list',
-      );
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     Object.assign(list, updateListDto);
 
@@ -119,30 +127,9 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this list',
-      );
-    }
+    // Permission check is handled by ResourcePermissionGuard
 
     await this.listRepository.remove(list);
-  }
-
-  private async verifyBoardOwnership(
-    boardId: string,
-    userId: string,
-  ): Promise<void> {
-    const board = await this.boardRepository.findOne({
-      where: { id: boardId },
-    });
-
-    if (!board) {
-      throw new NotFoundException(`Board with ID ${boardId} not found`);
-    }
-
-    if (board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this board');
-    }
   }
 
   private mapToListResponseDto(list: List): ListResponseDto {

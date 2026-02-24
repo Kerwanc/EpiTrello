@@ -9,6 +9,7 @@ import { ListsModule } from './modules/lists/lists.module';
 import { CardsModule } from './modules/cards/cards.module';
 import { User } from './modules/users/entities/user.entity';
 import { Board } from './modules/boards/entities/board.entity';
+import { BoardMember } from './modules/boards/entities/board-member.entity';
 import { List } from './modules/lists/entities/list.entity';
 import { Card } from './modules/cards/entities/card.entity';
 
@@ -21,9 +22,9 @@ import { Card } from './modules/cards/entities/card.entity';
       username: process.env.DATABASE_USER || 'postgres',
       password: process.env.DATABASE_PASSWORD || 'postgres',
       database: process.env.DATABASE_NAME || 'epitrello',
-      entities: [User, Board, List, Card],
+      entities: [User, Board, BoardMember, List, Card],
       synchronize: true,
-      logging: false,
+      logging: true,
     }),
     AuthModule,
     UsersModule,
