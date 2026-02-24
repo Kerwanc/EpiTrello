@@ -282,20 +282,20 @@ class ApiClient {
     });
   }
 
-  async assignUserToCard(cardId: string, userId: string): Promise<Card> {
-    return this.request<Card>(`/cards/${cardId}/assign/${userId}`, {
+  async assignUserToCard(listId: string, cardId: string, userId: string): Promise<Card> {
+    return this.request<Card>(`/lists/${listId}/cards/${cardId}/assign/${userId}`, {
       method: 'POST',
     });
   }
 
-  async unassignUserFromCard(cardId: string, userId: string): Promise<void> {
-    return this.request<void>(`/cards/${cardId}/assign/${userId}`, {
+  async unassignUserFromCard(listId: string, cardId: string, userId: string): Promise<void> {
+    return this.request<void>(`/lists/${listId}/cards/${cardId}/assign/${userId}`, {
       method: 'DELETE',
     });
   }
 
-  async getCardAssignments(cardId: string): Promise<User[]> {
-    return this.request<User[]>(`/cards/${cardId}/assignments`);
+  async getCardAssignments(listId: string, cardId: string): Promise<User[]> {
+    return this.request<User[]>(`/lists/${listId}/cards/${cardId}/assignments`);
   }
 }
 

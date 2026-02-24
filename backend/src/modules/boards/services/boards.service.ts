@@ -210,6 +210,7 @@ export class BoardsService {
   ): Promise<BoardMemberResponseDto[]> {
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
+      relations: ['owner'],
     });
 
     if (!board) {
@@ -230,7 +231,7 @@ export class BoardsService {
       order: { createdAt: 'ASC' },
     });
 
-    return members.map((member) => ({
+    const memberDtos = members.map((member) => ({
       id: member.id,
       boardId: member.boardId,
       userId: member.userId,
@@ -243,6 +244,24 @@ export class BoardsService {
         avatarUrl: member.user.avatarUrl,
       },
     }));
+
+    // Include the owner as a "member" with role 'owner'
+    const ownerDto: BoardMemberResponseDto = {
+      id: `owner-${board.ownerId}`, // Special ID for owner
+      boardId: board.id,
+      userId: board.ownerId,
+      role: 'owner' as any,
+      createdAt: board.createdAt,
+      user: {
+        id: board.owner.id,
+        username: board.owner.username,
+        email: board.owner.email,
+        avatarUrl: board.owner.avatarUrl,
+      },
+    };
+
+    // Return owner first, then members
+    return [ownerDto, ...memberDtos];
   }
 
   async updateMemberRole(
