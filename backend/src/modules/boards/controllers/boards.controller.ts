@@ -13,6 +13,9 @@ import {
 } from '@nestjs/common';
 import { BoardsService } from '../services/boards.service';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
+import { BoardPermissionGuard } from '../guards/board-permission.guard';
+import { RequireBoardPermission } from '../decorators/require-board-permission.decorator';
+import { BoardPermission } from '../services/board-permission.service';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
 import { BoardResponseDto } from '../dtos/board-response.dto';
@@ -42,6 +45,8 @@ export class BoardsController {
   }
 
   @Get(':id')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.VIEW)
   async getBoardById(
     @Param('id') boardId: string,
     @Request() req,
@@ -51,6 +56,8 @@ export class BoardsController {
   }
 
   @Patch(':id')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.EDIT)
   async updateBoard(
     @Param('id') boardId: string,
     @Body() updateBoardDto: UpdateBoardDto,
@@ -61,6 +68,8 @@ export class BoardsController {
   }
 
   @Delete(':id')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBoard(
     @Param('id') boardId: string,
@@ -71,6 +80,8 @@ export class BoardsController {
   }
 
   @Post(':boardId/members')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.INVITE_MEMBERS)
   @HttpCode(HttpStatus.CREATED)
   async inviteBoardMember(
     @Param('boardId') boardId: string,
@@ -87,6 +98,8 @@ export class BoardsController {
   }
 
   @Get(':boardId/members')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.VIEW)
   async getBoardMembers(
     @Param('boardId') boardId: string,
     @Request() req,
@@ -96,6 +109,8 @@ export class BoardsController {
   }
 
   @Patch(':boardId/members/:memberId')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.MANAGE_MEMBERS)
   async updateMemberRole(
     @Param('boardId') boardId: string,
     @Param('memberId') memberId: string,
@@ -112,6 +127,8 @@ export class BoardsController {
   }
 
   @Delete(':boardId/members/:memberId')
+  @UseGuards(BoardPermissionGuard)
+  @RequireBoardPermission(BoardPermission.MANAGE_MEMBERS)
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeBoardMember(
     @Param('boardId') boardId: string,
