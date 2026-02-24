@@ -5,9 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  ManyToMany,
   JoinColumn,
+  JoinTable,
 } from 'typeorm';
 import { List } from '../../lists/entities/list.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('cards')
 export class Card {
@@ -35,6 +38,14 @@ export class Card {
   @ManyToOne(() => List, (list) => list.cards, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'listId' })
   list: List;
+
+  @ManyToMany(() => User, (user) => user.assignedCards)
+  @JoinTable({
+    name: 'card_assignments',
+    joinColumn: { name: 'cardId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'userId', referencedColumnName: 'id' },
+  })
+  assignedUsers: User[];
 
   @CreateDateColumn()
   createdAt: Date;
