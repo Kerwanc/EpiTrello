@@ -1,4 +1,12 @@
-import { User, Board, List, Card, AuthResponse } from '@/types';
+import {
+  User,
+  Board,
+  List,
+  Card,
+  AuthResponse,
+  BoardMember,
+  BoardRole,
+} from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -241,6 +249,53 @@ class ApiClient {
     return this.request<void>(`/lists/${listId}/cards/${cardId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getBoardMembers(boardId: string): Promise<BoardMember[]> {
+    return this.request<BoardMember[]>(`/boards/${boardId}/members`);
+  }
+
+  async inviteBoardMember(
+    boardId: string,
+    data: { username: string; role: BoardRole },
+  ): Promise<BoardMember> {
+    return this.request<BoardMember>(`/boards/${boardId}/members`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateMemberRole(
+    boardId: string,
+    userId: string,
+    data: { role: BoardRole },
+  ): Promise<BoardMember> {
+    return this.request<BoardMember>(`/boards/${boardId}/members/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeBoardMember(boardId: string, userId: string): Promise<void> {
+    return this.request<void>(`/boards/${boardId}/members/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async assignUserToCard(cardId: string, userId: string): Promise<Card> {
+    return this.request<Card>(`/cards/${cardId}/assign/${userId}`, {
+      method: 'POST',
+    });
+  }
+
+  async unassignUserFromCard(cardId: string, userId: string): Promise<void> {
+    return this.request<void>(`/cards/${cardId}/assign/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getCardAssignments(cardId: string): Promise<User[]> {
+    return this.request<User[]>(`/cards/${cardId}/assignments`);
   }
 }
 
