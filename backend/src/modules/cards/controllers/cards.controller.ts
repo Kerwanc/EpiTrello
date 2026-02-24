@@ -19,6 +19,10 @@ import { BoardPermission } from '../../boards/services/board-permission.service'
 import { CreateCardDto } from '../dtos/create-card.dto';
 import { UpdateCardDto } from '../dtos/update-card.dto';
 import { CardResponseDto } from '../dtos/card-response.dto';
+import {
+  CardAssignmentResponseDto,
+  UserSummaryDto,
+} from '../dtos/card-assignment-response.dto';
 
 @Controller('lists/:listId/cards')
 @UseGuards(JwtGuard)
@@ -44,7 +48,7 @@ export class CardsController {
   async getAllCardsInList(
     @Param('listId') listId: string,
     @Request() req,
-  ): Promise<CardResponseDto[]> {
+  ): Promise<CardAssignmentResponseDto[]> {
     const userId = req.user.id;
     return this.cardsService.getAllCardsInList(listId, userId);
   }
@@ -55,7 +59,7 @@ export class CardsController {
   async getCardById(
     @Param('id') cardId: string,
     @Request() req,
-  ): Promise<CardResponseDto> {
+  ): Promise<CardAssignmentResponseDto> {
     const userId = req.user.id;
     return this.cardsService.getCardById(cardId, userId);
   }
@@ -79,5 +83,44 @@ export class CardsController {
   async deleteCard(@Param('id') cardId: string, @Request() req): Promise<void> {
     const userId = req.user.id;
     await this.cardsService.deleteCard(cardId, userId);
+  }
+
+  @Post(':cardId/assign/:userId')
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.EDIT)
+  async assignUser(
+    @Param('cardId') cardId: string,
+    @Param('userId') userIdToAssign: string,
+    @Request() req,
+  ): Promise<CardAssignmentResponseDto> {
+    const assignerId = req.user.id;
+    return this.cardsService.assignUser(cardId, userIdToAssign, assignerId);
+  }
+
+  @Delete(':cardId/assign/:userId')
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.EDIT)
+  async unassignUser(
+    @Param('cardId') cardId: string,
+    @Param('userId') userIdToUnassign: string,
+    @Request() req,
+  ): Promise<CardAssignmentResponseDto> {
+    const requesterId = req.user.id;
+    return this.cardsService.unassignUser(
+      cardId,
+      userIdToUnassign,
+      requesterId,
+    );
+  }
+
+  @Get(':cardId/assignments')
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.VIEW)
+  async getCardAssignments(
+    @Param('cardId') cardId: string,
+    @Request() req,
+  ): Promise<UserSummaryDto[]> {
+    const userId = req.user.id;
+    return this.cardsService.getCardAssignments(cardId, userId);
   }
 }

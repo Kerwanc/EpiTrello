@@ -10,8 +10,6 @@ import { Board } from '../entities/board.entity';
 
 describe('BoardPermissionService', () => {
   let service: BoardPermissionService;
-  let boardRepository: Repository<Board>;
-  let boardMemberRepository: Repository<BoardMember>;
 
   const mockBoardRepository = {
     findOne: jest.fn(),
@@ -37,10 +35,6 @@ describe('BoardPermissionService', () => {
     }).compile();
 
     service = module.get<BoardPermissionService>(BoardPermissionService);
-    boardRepository = module.get<Repository<Board>>(getRepositoryToken(Board));
-    boardMemberRepository = module.get<Repository<BoardMember>>(
-      getRepositoryToken(BoardMember),
-    );
   });
 
   afterEach(() => {

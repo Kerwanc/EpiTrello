@@ -2,14 +2,21 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Card } from '../entities/card.entity';
 import { List } from '../../lists/entities/list.entity';
+import { User } from '../../users/entities/user.entity';
+import { BoardMember } from '../../boards/entities/board-member.entity';
 import { CreateCardDto } from '../dtos/create-card.dto';
 import { UpdateCardDto } from '../dtos/update-card.dto';
 import { CardResponseDto } from '../dtos/card-response.dto';
+import {
+  CardAssignmentResponseDto,
+  UserSummaryDto,
+} from '../dtos/card-assignment-response.dto';
 
 @Injectable()
 export class CardsService {
@@ -18,6 +25,10 @@ export class CardsService {
     private cardRepository: Repository<Card>,
     @InjectRepository(List)
     private listRepository: Repository<List>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(BoardMember)
+    private boardMemberRepository: Repository<BoardMember>,
   ) {}
 
   async createCard(
@@ -55,21 +66,25 @@ export class CardsService {
   async getAllCardsInList(
     listId: string,
     userId: string,
-  ): Promise<CardResponseDto[]> {
+  ): Promise<CardAssignmentResponseDto[]> {
     await this.verifyListOwnership(listId, userId);
 
     const cards = await this.cardRepository.find({
       where: { listId },
+      relations: ['assignedUsers'],
       order: { position: 'ASC' },
     });
 
-    return cards.map((card) => this.mapToCardResponseDto(card));
+    return cards.map((card) => this.mapToCardAssignmentResponseDto(card));
   }
 
-  async getCardById(cardId: string, userId: string): Promise<CardResponseDto> {
+  async getCardById(
+    cardId: string,
+    userId: string,
+  ): Promise<CardAssignmentResponseDto> {
     const card = await this.cardRepository.findOne({
       where: { id: cardId },
-      relations: ['list', 'list.board'],
+      relations: ['list', 'list.board', 'assignedUsers'],
     });
 
     if (!card) {
@@ -80,7 +95,7 @@ export class CardsService {
       throw new ForbiddenException('You do not have access to this card');
     }
 
-    return this.mapToCardResponseDto(card);
+    return this.mapToCardAssignmentResponseDto(card);
   }
 
   async updateCard(
@@ -175,6 +190,134 @@ export class CardsService {
       tags: card.tags,
       position: card.position,
       listId: card.listId,
+      createdAt: card.createdAt,
+      updatedAt: card.updatedAt,
+    };
+  }
+
+  async assignUser(
+    cardId: string,
+    userIdToAssign: string,
+    _assignerId: string,
+  ): Promise<CardAssignmentResponseDto> {
+    const card = await this.cardRepository.findOne({
+      where: { id: cardId },
+      relations: ['list', 'list.board', 'assignedUsers'],
+    });
+
+    if (!card) {
+      throw new NotFoundException(`Card with ID ${cardId} not found`);
+    }
+
+    const boardId = card.list.board.id;
+    const board = card.list.board;
+
+    const userToAssign = await this.userRepository.findOne({
+      where: { id: userIdToAssign },
+    });
+
+    if (!userToAssign) {
+      throw new NotFoundException(`User with ID ${userIdToAssign} not found`);
+    }
+
+    const isOwner = board.ownerId === userIdToAssign;
+    const isMember = await this.boardMemberRepository.findOne({
+      where: { boardId, userId: userIdToAssign },
+    });
+
+    if (!isOwner && !isMember) {
+      throw new BadRequestException(
+        'User must be a board member to be assigned to a card',
+      );
+    }
+
+    const alreadyAssigned = card.assignedUsers?.some(
+      (user) => user.id === userIdToAssign,
+    );
+
+    if (alreadyAssigned) {
+      throw new BadRequestException('User is already assigned to this card');
+    }
+
+    card.assignedUsers = card.assignedUsers || [];
+    card.assignedUsers.push(userToAssign);
+
+    await this.cardRepository.save(card);
+
+    return this.mapToCardAssignmentResponseDto(card);
+  }
+
+  async unassignUser(
+    cardId: string,
+    userIdToUnassign: string,
+    _requesterId: string,
+  ): Promise<CardAssignmentResponseDto> {
+    const card = await this.cardRepository.findOne({
+      where: { id: cardId },
+      relations: ['assignedUsers'],
+    });
+
+    if (!card) {
+      throw new NotFoundException(`Card with ID ${cardId} not found`);
+    }
+
+    const isAssigned = card.assignedUsers?.some(
+      (user) => user.id === userIdToUnassign,
+    );
+
+    if (!isAssigned) {
+      throw new BadRequestException('User is not assigned to this card');
+    }
+
+    card.assignedUsers = card.assignedUsers.filter(
+      (user) => user.id !== userIdToUnassign,
+    );
+
+    await this.cardRepository.save(card);
+
+    return this.mapToCardAssignmentResponseDto(card);
+  }
+
+  async getCardAssignments(
+    cardId: string,
+    userId: string,
+  ): Promise<UserSummaryDto[]> {
+    const card = await this.cardRepository.findOne({
+      where: { id: cardId },
+      relations: ['list', 'list.board', 'assignedUsers'],
+    });
+
+    if (!card) {
+      throw new NotFoundException(`Card with ID ${cardId} not found`);
+    }
+
+    if (card.list.board.ownerId !== userId) {
+      throw new ForbiddenException('You do not have access to this card');
+    }
+
+    return (card.assignedUsers || []).map((user) => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+    }));
+  }
+
+  private mapToCardAssignmentResponseDto(
+    card: Card,
+  ): CardAssignmentResponseDto {
+    return {
+      id: card.id,
+      title: card.title,
+      description: card.description,
+      dueDate: card.dueDate,
+      tags: card.tags,
+      position: card.position,
+      listId: card.listId,
+      assignedUsers: (card.assignedUsers || []).map((user) => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      })),
       createdAt: card.createdAt,
       updatedAt: card.updatedAt,
     };

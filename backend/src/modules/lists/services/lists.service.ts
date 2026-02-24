@@ -10,6 +10,7 @@ import { Board } from '../../boards/entities/board.entity';
 import { CreateListDto } from '../dtos/create-list.dto';
 import { UpdateListDto } from '../dtos/update-list.dto';
 import { ListResponseDto } from '../dtos/list-response.dto';
+import { ListWithCardsResponseDto } from '../dtos/list-with-cards-response.dto';
 
 @Injectable()
 export class ListsService {
@@ -61,10 +62,14 @@ export class ListsService {
     return lists.map((list) => this.mapToListResponseDto(list));
   }
 
-  async getListById(listId: string, userId: string): Promise<ListResponseDto> {
+  async getListById(
+    listId: string,
+    userId: string,
+  ): Promise<ListWithCardsResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
-      relations: ['board'],
+      relations: ['board', 'cards', 'cards.assignedUsers'],
+      order: { cards: { position: 'ASC' } },
     });
 
     if (!list) {
@@ -75,7 +80,7 @@ export class ListsService {
       throw new ForbiddenException('You do not have access to this list');
     }
 
-    return this.mapToListResponseDto(list);
+    return this.mapToListWithCardsResponseDto(list);
   }
 
   async updateList(
@@ -146,6 +151,33 @@ export class ListsService {
       title: list.title,
       position: list.position,
       boardId: list.boardId,
+      createdAt: list.createdAt,
+      updatedAt: list.updatedAt,
+    };
+  }
+
+  private mapToListWithCardsResponseDto(list: List): ListWithCardsResponseDto {
+    return {
+      id: list.id,
+      title: list.title,
+      position: list.position,
+      boardId: list.boardId,
+      cards: (list.cards || []).map((card) => ({
+        id: card.id,
+        title: card.title,
+        description: card.description,
+        dueDate: card.dueDate,
+        tags: card.tags,
+        position: card.position,
+        listId: card.listId,
+        assignedUsers: (card.assignedUsers || []).map((user) => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        })),
+        createdAt: card.createdAt,
+        updatedAt: card.updatedAt,
+      })),
       createdAt: list.createdAt,
       updatedAt: list.updatedAt,
     };

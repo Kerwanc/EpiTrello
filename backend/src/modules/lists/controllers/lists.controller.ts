@@ -19,6 +19,7 @@ import { BoardPermission } from '../../boards/services/board-permission.service'
 import { CreateListDto } from '../dtos/create-list.dto';
 import { UpdateListDto } from '../dtos/update-list.dto';
 import { ListResponseDto } from '../dtos/list-response.dto';
+import { ListWithCardsResponseDto } from '../dtos/list-with-cards-response.dto';
 
 @Controller('boards/:boardId/lists')
 @UseGuards(JwtGuard)
@@ -55,7 +56,7 @@ export class ListsController {
   async getListById(
     @Param('id') listId: string,
     @Request() req,
-  ): Promise<ListResponseDto> {
+  ): Promise<ListWithCardsResponseDto> {
     const userId = req.user.id;
     return this.listsService.getListById(listId, userId);
   }
