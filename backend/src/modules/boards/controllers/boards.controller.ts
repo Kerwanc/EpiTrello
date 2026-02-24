@@ -16,6 +16,9 @@ import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
 import { BoardResponseDto } from '../dtos/board-response.dto';
+import { InviteBoardMemberDto } from '../dtos/invite-board-member.dto';
+import { UpdateBoardMemberDto } from '../dtos/update-board-member.dto';
+import { BoardMemberResponseDto } from '../dtos/board-member-response.dto';
 
 @Controller('boards')
 @UseGuards(JwtGuard)
@@ -65,5 +68,57 @@ export class BoardsController {
   ): Promise<void> {
     const userId = req.user.id;
     await this.boardsService.deleteBoard(boardId, userId);
+  }
+
+  @Post(':boardId/members')
+  @HttpCode(HttpStatus.CREATED)
+  async inviteBoardMember(
+    @Param('boardId') boardId: string,
+    @Body() inviteMemberDto: InviteBoardMemberDto,
+    @Request() req,
+  ): Promise<BoardMemberResponseDto> {
+    const userId = req.user.id;
+    return this.boardsService.inviteMember(
+      boardId,
+      inviteMemberDto.username,
+      inviteMemberDto.role,
+      userId,
+    );
+  }
+
+  @Get(':boardId/members')
+  async getBoardMembers(
+    @Param('boardId') boardId: string,
+    @Request() req,
+  ): Promise<BoardMemberResponseDto[]> {
+    const userId = req.user.id;
+    return this.boardsService.getBoardMembers(boardId, userId);
+  }
+
+  @Patch(':boardId/members/:memberId')
+  async updateMemberRole(
+    @Param('boardId') boardId: string,
+    @Param('memberId') memberId: string,
+    @Body() updateMemberDto: UpdateBoardMemberDto,
+    @Request() req,
+  ): Promise<BoardMemberResponseDto> {
+    const userId = req.user.id;
+    return this.boardsService.updateMemberRole(
+      boardId,
+      memberId,
+      updateMemberDto.role,
+      userId,
+    );
+  }
+
+  @Delete(':boardId/members/:memberId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeBoardMember(
+    @Param('boardId') boardId: string,
+    @Param('memberId') memberId: string,
+    @Request() req,
+  ): Promise<void> {
+    const userId = req.user.id;
+    await this.boardsService.removeMember(boardId, memberId, userId);
   }
 }

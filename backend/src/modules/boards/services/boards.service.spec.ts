@@ -1,10 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { Board } from '../entities/board.entity';
+import { BoardMember } from '../entities/board-member.entity';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
+import { UserService } from '../../users/services/user.service';
 
 describe('BoardsService', () => {
   let boardsService: BoardsService;
@@ -15,6 +21,18 @@ describe('BoardsService', () => {
     find: jest.fn(),
     findOne: jest.fn(),
     remove: jest.fn(),
+  };
+
+  const mockBoardMemberRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  const mockUserService = {
+    getUserByUsername: jest.fn(),
   };
 
   const mockBoard: Board = {
@@ -40,6 +58,14 @@ describe('BoardsService', () => {
         {
           provide: getRepositoryToken(Board),
           useValue: mockBoardRepository,
+        },
+        {
+          provide: getRepositoryToken(BoardMember),
+          useValue: mockBoardMemberRepository,
+        },
+        {
+          provide: UserService,
+          useValue: mockUserService,
         },
       ],
     }).compile();
@@ -320,6 +346,233 @@ describe('BoardsService', () => {
       ).rejects.toThrow('You do not have permission to delete this board');
 
       expect(mockBoardRepository.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('inviteMember', () => {
+    const invitedUser = {
+      id: 'invited-user-uuid',
+      username: 'inviteduser',
+      email: 'invited@example.com',
+      avatarUrl: null,
+    };
+
+    it('should successfully invite a member to board', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockUserService.getUserByUsername.mockResolvedValue(invitedUser);
+      mockBoardMemberRepository.findOne.mockResolvedValue(null);
+      mockBoardMemberRepository.create.mockReturnValue({
+        boardId: mockBoard.id,
+        userId: invitedUser.id,
+        role: 'moderator',
+      });
+      mockBoardMemberRepository.save.mockResolvedValue({
+        id: 'member-uuid',
+        boardId: mockBoard.id,
+        userId: invitedUser.id,
+        role: 'moderator',
+        createdAt: new Date(),
+      });
+
+      const result = await boardsService.inviteMember(
+        mockBoard.id,
+        'inviteduser',
+        'moderator',
+        userId,
+      );
+
+      expect(result.userId).toBe(invitedUser.id);
+      expect(result.role).toBe('moderator');
+      expect(mockBoardMemberRepository.save).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if board does not exist', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        boardsService.inviteMember(
+          'non-existent-id',
+          'inviteduser',
+          'moderator',
+          userId,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if inviter is not owner', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+
+      await expect(
+        boardsService.inviteMember(
+          mockBoard.id,
+          'inviteduser',
+          'moderator',
+          otherUserId,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockUserService.getUserByUsername.mockResolvedValue(null);
+
+      await expect(
+        boardsService.inviteMember(
+          mockBoard.id,
+          'nonexistent',
+          'moderator',
+          userId,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException if user already a member', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockUserService.getUserByUsername.mockResolvedValue(invitedUser);
+      mockBoardMemberRepository.findOne.mockResolvedValue({
+        id: 'existing-member',
+        boardId: mockBoard.id,
+        userId: invitedUser.id,
+      });
+
+      await expect(
+        boardsService.inviteMember(
+          mockBoard.id,
+          'inviteduser',
+          'moderator',
+          userId,
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('getBoardMembers', () => {
+    it('should return all board members', async () => {
+      const mockMembers = [
+        {
+          id: 'member-1',
+          boardId: mockBoard.id,
+          userId: 'user-1',
+          role: 'moderator',
+          createdAt: new Date(),
+          user: {
+            id: 'user-1',
+            username: 'user1',
+            email: 'user1@example.com',
+            avatarUrl: null,
+          },
+        },
+      ];
+
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockBoardMemberRepository.findOne.mockResolvedValue(null);
+      mockBoardMemberRepository.find.mockResolvedValue(mockMembers);
+
+      const result = await boardsService.getBoardMembers(mockBoard.id, userId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].user.username).toBe('user1');
+    });
+
+    it('should throw NotFoundException if board does not exist', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        boardsService.getBoardMembers('non-existent-id', userId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if user has no access', async () => {
+      mockBoardRepository.findOne.mockResolvedValue({
+        ...mockBoard,
+        ownerId: otherUserId,
+      });
+      mockBoardMemberRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        boardsService.getBoardMembers(mockBoard.id, userId),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('updateMemberRole', () => {
+    const mockMember = {
+      id: 'member-uuid',
+      boardId: mockBoard.id,
+      userId: 'member-user-uuid',
+      role: 'visitor',
+      user: {
+        id: 'member-user-uuid',
+        username: 'memberuser',
+        email: 'member@example.com',
+        avatarUrl: null,
+      },
+    };
+
+    it('should successfully update member role', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockBoardMemberRepository.findOne.mockResolvedValue(mockMember);
+      mockBoardMemberRepository.save.mockResolvedValue({
+        ...mockMember,
+        role: 'moderator',
+      });
+
+      const result = await boardsService.updateMemberRole(
+        mockBoard.id,
+        'member-uuid',
+        'moderator',
+        userId,
+      );
+
+      expect(result.role).toBe('moderator');
+    });
+
+    it('should throw ForbiddenException if requester is not owner', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+
+      await expect(
+        boardsService.updateMemberRole(
+          mockBoard.id,
+          'member-uuid',
+          'moderator',
+          otherUserId,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('removeMember', () => {
+    const mockMember = {
+      id: 'member-uuid',
+      boardId: mockBoard.id,
+      userId: 'member-user-uuid',
+    };
+
+    it('should successfully remove member', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockBoardMemberRepository.findOne.mockResolvedValue(mockMember);
+      mockBoardMemberRepository.remove.mockResolvedValue(mockMember);
+
+      await boardsService.removeMember(mockBoard.id, 'member-uuid', userId);
+
+      expect(mockBoardMemberRepository.remove).toHaveBeenCalledWith(mockMember);
+    });
+
+    it('should throw ForbiddenException if requester is not owner', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+
+      await expect(
+        boardsService.removeMember(mockBoard.id, 'member-uuid', otherUserId),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw NotFoundException if member not found', async () => {
+      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      mockBoardMemberRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        boardsService.removeMember(mockBoard.id, 'member-uuid', userId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
