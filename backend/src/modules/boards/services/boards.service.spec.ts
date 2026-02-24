@@ -15,12 +15,24 @@ import { UserService } from '../../users/services/user.service';
 describe('BoardsService', () => {
   let boardsService: BoardsService;
 
+  const mockQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    getOne: jest.fn(),
+  };
+
   const mockBoardRepository = {
     create: jest.fn(),
     save: jest.fn(),
     find: jest.fn(),
     findOne: jest.fn(),
     remove: jest.fn(),
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockBoardMemberRepository = {
@@ -138,41 +150,69 @@ describe('BoardsService', () => {
   });
 
   describe('getAllUserBoards', () => {
-    it('should return all boards for a user', async () => {
+    it('should return all boards for a user (owned)', async () => {
       const userBoards = [
         mockBoard,
         { ...mockBoard, id: 'board-uuid-456', title: 'Second Board' },
       ];
 
-      mockBoardRepository.find.mockResolvedValue(userBoards);
+      mockQueryBuilder.getMany
+        .mockResolvedValueOnce(userBoards)
+        .mockResolvedValueOnce([]); 
 
       const result = await boardsService.getAllUserBoards(userId);
 
       expect(result).toHaveLength(2);
       expect(result[0].ownerId).toBe(userId);
+      expect(result[0].userRole).toBe('owner');
+      expect(result[0].memberCount).toBe(1);
       expect(result[1].ownerId).toBe(userId);
-
-      expect(mockBoardRepository.find).toHaveBeenCalledWith({
-        where: { ownerId: userId },
-        order: { createdAt: 'DESC' },
-      });
+      expect(result[1].userRole).toBe('owner');
     });
 
     it('should return empty array if user has no boards', async () => {
-      mockBoardRepository.find.mockResolvedValue([]);
+      mockQueryBuilder.getMany
+        .mockResolvedValueOnce([]) 
+        .mockResolvedValueOnce([]); 
 
       const result = await boardsService.getAllUserBoards(userId);
 
       expect(result).toEqual([]);
-      expect(mockBoardRepository.find).toHaveBeenCalledWith({
-        where: { ownerId: userId },
-        order: { createdAt: 'DESC' },
+    });
+
+    it('should return owned boards and member boards', async () => {
+      const ownedBoard = { ...mockBoard, ownerId: userId, members: [] };
+      const memberBoard = {
+        ...mockBoard,
+        id: 'board-uuid-999',
+        ownerId: 'other-owner',
+        title: 'Shared Board',
+        members: [],
+      };
+
+      mockQueryBuilder.getMany
+        .mockResolvedValueOnce([ownedBoard]) 
+        .mockResolvedValueOnce([memberBoard]); 
+
+      mockBoardMemberRepository.findOne.mockResolvedValue({
+        id: 'member-1',
+        boardId: memberBoard.id,
+        userId,
+        role: 'moderator',
       });
+
+      const result = await boardsService.getAllUserBoards(userId);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].userRole).toBe('owner');
+      expect(result[0].id).toBe(ownedBoard.id);
+      expect(result[1].userRole).toBe('moderator');
+      expect(result[1].id).toBe(memberBoard.id);
     });
   });
 
   describe('getBoardById', () => {
-    it('should return board if user owns it', async () => {
+    it('should return board with role if user owns it', async () => {
       mockBoardRepository.findOne.mockResolvedValue(mockBoard);
 
       const result = await boardsService.getBoardById(mockBoard.id, userId);
@@ -183,13 +223,36 @@ describe('BoardsService', () => {
         description: mockBoard.description,
         thumbnail: mockBoard.thumbnail,
         ownerId: mockBoard.ownerId,
+        userRole: 'owner',
+        memberCount: 1,
         createdAt: mockBoard.createdAt,
         updatedAt: mockBoard.updatedAt,
       });
 
       expect(mockBoardRepository.findOne).toHaveBeenCalledWith({
         where: { id: mockBoard.id },
+        relations: ['members'],
       });
+    });
+
+    it('should return board with role if user is a member', async () => {
+      const boardWithDifferentOwner = {
+        ...mockBoard,
+        ownerId: 'different-owner',
+      };
+
+      mockBoardRepository.findOne.mockResolvedValue(boardWithDifferentOwner);
+      mockBoardMemberRepository.findOne.mockResolvedValue({
+        id: 'member-1',
+        boardId: mockBoard.id,
+        userId,
+        role: 'moderator',
+      });
+
+      const result = await boardsService.getBoardById(mockBoard.id, userId);
+
+      expect(result.userRole).toBe('moderator');
+      expect(result.memberCount).toBe(1);
     });
 
     it('should throw NotFoundException if board does not exist', async () => {
@@ -204,8 +267,14 @@ describe('BoardsService', () => {
       ).rejects.toThrow('Board with ID non-existent-id not found');
     });
 
-    it('should throw ForbiddenException if user does not own board', async () => {
-      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+    it('should throw ForbiddenException if user is not owner or member', async () => {
+      const boardWithDifferentOwner = {
+        ...mockBoard,
+        ownerId: 'different-owner',
+      };
+
+      mockBoardRepository.findOne.mockResolvedValue(boardWithDifferentOwner);
+      mockBoardMemberRepository.findOne.mockResolvedValue(null);
 
       await expect(
         boardsService.getBoardById(mockBoard.id, otherUserId),

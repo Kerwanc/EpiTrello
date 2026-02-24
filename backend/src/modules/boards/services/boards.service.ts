@@ -8,10 +8,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Board } from '../entities/board.entity';
-import { BoardMember } from '../entities/board-member.entity';
+import { BoardMember, BoardRole } from '../entities/board-member.entity';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
 import { BoardResponseDto } from '../dtos/board-response.dto';
+import { BoardWithRoleDto } from '../dtos/board-with-role.dto';
 import { BoardMemberResponseDto } from '../dtos/board-member-response.dto';
 import { UserService } from '../../users/services/user.service';
 
@@ -38,32 +39,72 @@ export class BoardsService {
     return this.mapToBoardResponseDto(savedBoard);
   }
 
-  async getAllUserBoards(userId: string): Promise<BoardResponseDto[]> {
-    const boards = await this.boardRepository.find({
-      where: { ownerId: userId },
-      order: { createdAt: 'DESC' },
-    });
+  async getAllUserBoards(userId: string): Promise<BoardWithRoleDto[]> {
+    const ownedBoards = await this.boardRepository
+      .createQueryBuilder('board')
+      .leftJoinAndSelect('board.members', 'member')
+      .where('board.ownerId = :userId', { userId })
+      .orderBy('board.createdAt', 'DESC')
+      .getMany();
 
-    return boards.map((board) => this.mapToBoardResponseDto(board));
+    const memberBoards = await this.boardRepository
+      .createQueryBuilder('board')
+      .leftJoinAndSelect('board.members', 'member')
+      .leftJoin('board.members', 'userMember')
+      .where('userMember.userId = :userId', { userId })
+      .andWhere('board.ownerId != :userId', { userId })
+      .orderBy('board.updatedAt', 'DESC')
+      .getMany();
+
+    const ownedBoardDtos = ownedBoards.map((board) =>
+      this.mapToBoardWithRoleDto(board, 'owner'),
+    );
+
+    // Map member boards with their respective roles
+    const memberBoardDtos = await Promise.all(
+      memberBoards.map(async (board) => {
+        const membership = await this.boardMemberRepository.findOne({
+          where: { boardId: board.id, userId },
+        });
+        return this.mapToBoardWithRoleDto(
+          board,
+          membership?.role || BoardRole.VISITOR,
+        );
+      }),
+    );
+
+    // Return owned boards first, then member boards
+    return [...ownedBoardDtos, ...memberBoardDtos];
   }
 
   async getBoardById(
     boardId: string,
     userId: string,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithRoleDto> {
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
+      relations: ['members'],
     });
 
     if (!board) {
       throw new NotFoundException(`Board with ID ${boardId} not found`);
     }
 
-    if (board.ownerId !== userId) {
+    // Check if user is owner
+    if (board.ownerId === userId) {
+      return this.mapToBoardWithRoleDto(board, 'owner');
+    }
+
+    // Check if user is a member
+    const membership = await this.boardMemberRepository.findOne({
+      where: { boardId, userId },
+    });
+
+    if (!membership) {
       throw new ForbiddenException('You do not have access to this board');
     }
 
-    return this.mapToBoardResponseDto(board);
+    return this.mapToBoardWithRoleDto(board, membership.role);
   }
 
   async updateBoard(
@@ -290,6 +331,26 @@ export class BoardsService {
       description: board.description,
       thumbnail: board.thumbnail,
       ownerId: board.ownerId,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt,
+    };
+  }
+
+  private mapToBoardWithRoleDto(
+    board: Board,
+    userRole: BoardRole | 'owner',
+  ): BoardWithRoleDto {
+    // Count members: include board members + owner (1)
+    const memberCount = (board.members?.length || 0) + 1;
+
+    return {
+      id: board.id,
+      title: board.title,
+      description: board.description,
+      thumbnail: board.thumbnail,
+      ownerId: board.ownerId,
+      userRole,
+      memberCount,
       createdAt: board.createdAt,
       updatedAt: board.updatedAt,
     };

@@ -19,6 +19,7 @@ import { BoardPermission } from '../services/board-permission.service';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
 import { BoardResponseDto } from '../dtos/board-response.dto';
+import { BoardWithRoleDto } from '../dtos/board-with-role.dto';
 import { InviteBoardMemberDto } from '../dtos/invite-board-member.dto';
 import { UpdateBoardMemberDto } from '../dtos/update-board-member.dto';
 import { BoardMemberResponseDto } from '../dtos/board-member-response.dto';
@@ -39,7 +40,7 @@ export class BoardsController {
   }
 
   @Get()
-  async getAllUserBoards(@Request() req): Promise<BoardResponseDto[]> {
+  async getAllUserBoards(@Request() req): Promise<BoardWithRoleDto[]> {
     const userId = req.user.id;
     return this.boardsService.getAllUserBoards(userId);
   }
@@ -50,7 +51,7 @@ export class BoardsController {
   async getBoardById(
     @Param('id') boardId: string,
     @Request() req,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithRoleDto> {
     const userId = req.user.id;
     return this.boardsService.getBoardById(boardId, userId);
   }
