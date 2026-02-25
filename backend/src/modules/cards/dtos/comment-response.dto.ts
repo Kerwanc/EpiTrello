@@ -2,7 +2,7 @@ export class CommentAuthorDto {
   id: string;
   username: string;
   email: string;
-  avatarUrl?: string;
+  avatarUrl: string | null;
 }
 
 export class CommentResponseDto {

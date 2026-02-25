@@ -158,7 +158,7 @@ describe('BoardsService', () => {
 
       mockQueryBuilder.getMany
         .mockResolvedValueOnce(userBoards)
-        .mockResolvedValueOnce([]); 
+        .mockResolvedValueOnce([]);
 
       const result = await boardsService.getAllUserBoards(userId);
 
@@ -172,8 +172,8 @@ describe('BoardsService', () => {
 
     it('should return empty array if user has no boards', async () => {
       mockQueryBuilder.getMany
-        .mockResolvedValueOnce([]) 
-        .mockResolvedValueOnce([]); 
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
 
       const result = await boardsService.getAllUserBoards(userId);
 
@@ -191,8 +191,8 @@ describe('BoardsService', () => {
       };
 
       mockQueryBuilder.getMany
-        .mockResolvedValueOnce([ownedBoard]) 
-        .mockResolvedValueOnce([memberBoard]); 
+        .mockResolvedValueOnce([ownedBoard])
+        .mockResolvedValueOnce([memberBoard]);
 
       mockBoardMemberRepository.findOne.mockResolvedValue({
         id: 'member-1',

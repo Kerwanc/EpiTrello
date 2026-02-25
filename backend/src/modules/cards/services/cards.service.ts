@@ -74,8 +74,6 @@ export class CardsService {
     listId: string,
     userId: string,
   ): Promise<CardAssignmentResponseDto[]> {
-    // Permission check is handled by ResourcePermissionGuard
-    // Just verify list exists
     const list = await this.listRepository.findOne({
       where: { id: listId },
     });
@@ -106,7 +104,6 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-    // Permission check is handled by ResourcePermissionGuard
 
     return this.mapToCardAssignmentResponseDto(card);
   }
@@ -125,24 +122,26 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-    // Permission check is handled by ResourcePermissionGuard
 
     if (
       updateCardDto.listId !== undefined &&
       updateCardDto.listId !== card.listId
     ) {
-      // Verify the new list exists and belongs to the same board
       const newList = await this.listRepository.findOne({
         where: { id: updateCardDto.listId },
         relations: ['board'],
       });
 
       if (!newList) {
-        throw new NotFoundException(`List with ID ${updateCardDto.listId} not found`);
+        throw new NotFoundException(
+          `List with ID ${updateCardDto.listId} not found`,
+        );
       }
 
       if (newList.boardId !== card.list.boardId) {
-        throw new BadRequestException('Cannot move card to a list in a different board');
+        throw new BadRequestException(
+          'Cannot move card to a list in a different board',
+        );
       }
 
       card.listId = updateCardDto.listId;
@@ -175,9 +174,6 @@ export class CardsService {
     if (!card) {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
-
-    // Permission check is handled by ResourcePermissionGuard
-
     await this.cardRepository.remove(card);
   }
 
@@ -290,8 +286,6 @@ export class CardsService {
     if (!card) {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
-
-    // Permission check is handled by ResourcePermissionGuard
 
     return (card.assignedUsers || []).map((user) => ({
       id: user.id,
