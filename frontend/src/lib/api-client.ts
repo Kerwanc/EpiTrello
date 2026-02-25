@@ -283,16 +283,30 @@ class ApiClient {
     });
   }
 
-  async assignUserToCard(listId: string, cardId: string, userId: string): Promise<Card> {
-    return this.request<Card>(`/lists/${listId}/cards/${cardId}/assign/${userId}`, {
-      method: 'POST',
-    });
+  async assignUserToCard(
+    listId: string,
+    cardId: string,
+    userId: string,
+  ): Promise<Card> {
+    return this.request<Card>(
+      `/lists/${listId}/cards/${cardId}/assign/${userId}`,
+      {
+        method: 'POST',
+      },
+    );
   }
 
-  async unassignUserFromCard(listId: string, cardId: string, userId: string): Promise<void> {
-    return this.request<void>(`/lists/${listId}/cards/${cardId}/assign/${userId}`, {
-      method: 'DELETE',
-    });
+  async unassignUserFromCard(
+    listId: string,
+    cardId: string,
+    userId: string,
+  ): Promise<void> {
+    return this.request<void>(
+      `/lists/${listId}/cards/${cardId}/assign/${userId}`,
+      {
+        method: 'DELETE',
+      },
+    );
   }
 
   async getCardAssignments(listId: string, cardId: string): Promise<User[]> {
@@ -300,9 +314,7 @@ class ApiClient {
   }
 
   async getCardComments(listId: string, cardId: string): Promise<Comment[]> {
-    return this.request<Comment[]>(
-      `/lists/${listId}/cards/${cardId}/comments`,
-    );
+    return this.request<Comment[]>(`/lists/${listId}/cards/${cardId}/comments`);
   }
 
   async createComment(

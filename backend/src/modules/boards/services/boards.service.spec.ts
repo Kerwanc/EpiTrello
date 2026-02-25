@@ -533,14 +533,25 @@ describe('BoardsService', () => {
         },
       ];
 
-      mockBoardRepository.findOne.mockResolvedValue(mockBoard);
+      const boardWithOwner = {
+        ...mockBoard,
+        owner: {
+          id: userId,
+          username: 'owner',
+          email: 'owner@example.com',
+          avatarUrl: null,
+        },
+      };
+
+      mockBoardRepository.findOne.mockResolvedValue(boardWithOwner);
       mockBoardMemberRepository.findOne.mockResolvedValue(null);
       mockBoardMemberRepository.find.mockResolvedValue(mockMembers);
 
       const result = await boardsService.getBoardMembers(mockBoard.id, userId);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].user.username).toBe('user1');
+      expect(result).toHaveLength(2);
+      expect(result[0].role).toBe('owner');
+      expect(result[1].user.username).toBe('user1');
     });
 
     it('should throw NotFoundException if board does not exist', async () => {

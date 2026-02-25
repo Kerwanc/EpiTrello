@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { List } from '../entities/list.entity';
@@ -24,7 +20,7 @@ export class ListsService {
   async createList(
     boardId: string,
     createListDto: CreateListDto,
-    userId: string,
+    _userId: string,
   ): Promise<ListResponseDto> {
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
@@ -56,7 +52,7 @@ export class ListsService {
 
   async getAllListsInBoard(
     boardId: string,
-    userId: string,
+    _userId: string,
   ): Promise<ListResponseDto[]> {
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
@@ -76,7 +72,7 @@ export class ListsService {
 
   async getListById(
     listId: string,
-    userId: string,
+    _userId: string,
   ): Promise<ListWithCardsResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
@@ -94,7 +90,7 @@ export class ListsService {
   async updateList(
     listId: string,
     updateListDto: UpdateListDto,
-    userId: string,
+    _userId: string,
   ): Promise<ListResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
@@ -111,7 +107,7 @@ export class ListsService {
     return this.mapToListResponseDto(updatedList);
   }
 
-  async deleteList(listId: string, userId: string): Promise<void> {
+  async deleteList(listId: string, _userId: string): Promise<void> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
       relations: ['board'],

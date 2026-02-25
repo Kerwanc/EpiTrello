@@ -46,12 +46,14 @@ export default function BoardMembersModal({
     try {
       setUpdatingMemberId(memberId);
       setError(null);
-      const updatedMember = await apiClient.updateMemberRole(boardId, memberId, {
-        role: newRole,
-      });
-      setMembers(
-        members.map((m) => (m.id === memberId ? updatedMember : m)),
+      const updatedMember = await apiClient.updateMemberRole(
+        boardId,
+        memberId,
+        {
+          role: newRole,
+        },
       );
+      setMembers(members.map((m) => (m.id === memberId ? updatedMember : m)));
     } catch (err: any) {
       setError(err.message || 'Failed to update member role');
     } finally {
@@ -125,9 +127,7 @@ export default function BoardMembersModal({
                 Loading members...
               </p>
             ) : members.length === 0 ? (
-              <p className="text-center text-gray-600 py-8">
-                No members found
-              </p>
+              <p className="text-center text-gray-600 py-8">No members found</p>
             ) : (
               <div className="space-y-3">
                 {members.map((member) => (

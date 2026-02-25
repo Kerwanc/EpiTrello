@@ -354,7 +354,9 @@ export default function CardEditModal({
                     )}
 
                     {loadingMembers ? (
-                      <p className="text-sm text-gray-600">Loading members...</p>
+                      <p className="text-sm text-gray-600">
+                        Loading members...
+                      </p>
                     ) : (
                       <>
                         {assignedUsers.length > 0 && (
@@ -453,9 +455,7 @@ export default function CardEditModal({
                   <div className="flex justify-between items-center mt-2">
                     <span
                       className={`text-xs ${
-                        remainingChars < 100
-                          ? 'text-red-600'
-                          : 'text-gray-500'
+                        remainingChars < 100 ? 'text-red-600' : 'text-gray-500'
                       }`}
                     >
                       {remainingChars} characters remaining

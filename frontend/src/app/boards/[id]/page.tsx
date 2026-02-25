@@ -500,44 +500,52 @@ export default function BoardDetailPage() {
                                             ? 'shadow-2xl ring-2 ring-blue-400 ring-opacity-50 rotate-2 scale-105 opacity-90'
                                             : 'shadow-sm hover:shadow-lg hover:ring-1 hover:ring-gray-200'
                                         }`}
-                                       >
-                                         <div className="flex items-start justify-between gap-2">
-                                           <h3 className="font-medium text-gray-900 flex-1 break-words">
-                                             {card.title}
-                                           </h3>
-                                           <button
-                                             onClick={(e) => {
-                                               e.stopPropagation();
-                                               handleDeleteCard(
-                                                 list.id,
-                                                 card.id,
-                                               );
-                                             }}
-                                             className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded p-1 transition-colors flex-shrink-0"
-                                             title="Delete card"
-                                           >
-                                             ×
-                                           </button>
-                                         </div>
-                                         {card.assignedUsers && card.assignedUsers.length > 0 && (
-                                           <div className="flex items-center gap-1 mt-2">
-                                             {card.assignedUsers.slice(0, 3).map((user) => (
-                                               <div
-                                                 key={user.id}
-                                                 className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold"
-                                                 title={user.username}
-                                               >
-                                                 {user.username.charAt(0).toUpperCase()}
-                                               </div>
-                                             ))}
-                                             {card.assignedUsers.length > 3 && (
-                                               <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-semibold">
-                                                 +{card.assignedUsers.length - 3}
-                                               </div>
-                                             )}
-                                           </div>
-                                         )}
-                                         {card.description && (
+                                      >
+                                        <div className="flex items-start justify-between gap-2">
+                                          <h3 className="font-medium text-gray-900 flex-1 break-words">
+                                            {card.title}
+                                          </h3>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleDeleteCard(
+                                                list.id,
+                                                card.id,
+                                              );
+                                            }}
+                                            className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded p-1 transition-colors flex-shrink-0"
+                                            title="Delete card"
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+                                        {card.assignedUsers &&
+                                          card.assignedUsers.length > 0 && (
+                                            <div className="flex items-center gap-1 mt-2">
+                                              {card.assignedUsers
+                                                .slice(0, 3)
+                                                .map((user) => (
+                                                  <div
+                                                    key={user.id}
+                                                    className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold"
+                                                    title={user.username}
+                                                  >
+                                                    {user.username
+                                                      .charAt(0)
+                                                      .toUpperCase()}
+                                                  </div>
+                                                ))}
+                                              {card.assignedUsers.length >
+                                                3 && (
+                                                <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-semibold">
+                                                  +
+                                                  {card.assignedUsers.length -
+                                                    3}
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                        {card.description && (
                                           <p className="text-sm text-gray-600 mt-2">
                                             {card.description}
                                           </p>

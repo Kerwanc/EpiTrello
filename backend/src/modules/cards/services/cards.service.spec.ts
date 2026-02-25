@@ -1,16 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CardsService } from './cards.service';
 import { Card } from '../entities/card.entity';
 import { List } from '../../lists/entities/list.entity';
 import { User } from '../../users/entities/user.entity';
 import { BoardMember } from '../../boards/entities/board-member.entity';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('CardsService - Assignment Methods', () => {
   let service: CardsService;

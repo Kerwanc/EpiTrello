@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -34,7 +33,7 @@ export class CardsService {
   async createCard(
     listId: string,
     createCardDto: CreateCardDto,
-    userId: string,
+    _userId: string,
   ): Promise<CardResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
@@ -72,7 +71,7 @@ export class CardsService {
 
   async getAllCardsInList(
     listId: string,
-    userId: string,
+    _userId: string,
   ): Promise<CardAssignmentResponseDto[]> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
@@ -93,7 +92,7 @@ export class CardsService {
 
   async getCardById(
     cardId: string,
-    userId: string,
+    _userId: string,
   ): Promise<CardAssignmentResponseDto> {
     const card = await this.cardRepository.findOne({
       where: { id: cardId },
@@ -104,14 +103,13 @@ export class CardsService {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
 
-
     return this.mapToCardAssignmentResponseDto(card);
   }
 
   async updateCard(
     cardId: string,
     updateCardDto: UpdateCardDto,
-    userId: string,
+    _userId: string,
   ): Promise<CardResponseDto> {
     const card = await this.cardRepository.findOne({
       where: { id: cardId },
@@ -121,7 +119,6 @@ export class CardsService {
     if (!card) {
       throw new NotFoundException(`Card with ID ${cardId} not found`);
     }
-
 
     if (
       updateCardDto.listId !== undefined &&
@@ -165,7 +162,7 @@ export class CardsService {
     return this.mapToCardResponseDto(updatedCard);
   }
 
-  async deleteCard(cardId: string, userId: string): Promise<void> {
+  async deleteCard(cardId: string, _userId: string): Promise<void> {
     const card = await this.cardRepository.findOne({
       where: { id: cardId },
       relations: ['list', 'list.board'],
@@ -276,7 +273,7 @@ export class CardsService {
 
   async getCardAssignments(
     cardId: string,
-    userId: string,
+    _userId: string,
   ): Promise<UserSummaryDto[]> {
     const card = await this.cardRepository.findOne({
       where: { id: cardId },
