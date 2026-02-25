@@ -57,6 +57,24 @@ export interface Card {
   updatedAt: string;
 }
 
+export interface CommentAuthor {
+  id: string;
+  username: string;
+  email: string;
+  avatarUrl: string | null;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  cardId: string;
+  authorId: string;
+  author: CommentAuthor;
+  createdAt: string;
+  updatedAt: string;
+  isEdited: boolean;
+}
+
 export interface AuthResponse {
   accessToken: string;
   user: User;

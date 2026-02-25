@@ -6,6 +6,7 @@ import {
   AuthResponse,
   BoardMember,
   BoardRole,
+  Comment,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -296,6 +297,51 @@ class ApiClient {
 
   async getCardAssignments(listId: string, cardId: string): Promise<User[]> {
     return this.request<User[]>(`/lists/${listId}/cards/${cardId}/assignments`);
+  }
+
+  async getCardComments(listId: string, cardId: string): Promise<Comment[]> {
+    return this.request<Comment[]>(
+      `/lists/${listId}/cards/${cardId}/comments`,
+    );
+  }
+
+  async createComment(
+    listId: string,
+    cardId: string,
+    data: { content: string },
+  ): Promise<Comment> {
+    return this.request<Comment>(`/lists/${listId}/cards/${cardId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateComment(
+    listId: string,
+    cardId: string,
+    commentId: string,
+    data: { content: string },
+  ): Promise<Comment> {
+    return this.request<Comment>(
+      `/lists/${listId}/cards/${cardId}/comments/${commentId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async deleteComment(
+    listId: string,
+    cardId: string,
+    commentId: string,
+  ): Promise<void> {
+    return this.request<void>(
+      `/lists/${listId}/cards/${cardId}/comments/${commentId}`,
+      {
+        method: 'DELETE',
+      },
+    );
   }
 }
 
