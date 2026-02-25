@@ -58,8 +58,6 @@ export class ListsService {
     boardId: string,
     userId: string,
   ): Promise<ListResponseDto[]> {
-    // Permission check is handled by ResourcePermissionGuard
-    // Just verify board exists
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
     });
@@ -90,8 +88,6 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    // Permission check is handled by ResourcePermissionGuard
-
     return this.mapToListWithCardsResponseDto(list);
   }
 
@@ -109,8 +105,6 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    // Permission check is handled by ResourcePermissionGuard
-
     Object.assign(list, updateListDto);
 
     const updatedList = await this.listRepository.save(list);
@@ -126,8 +120,6 @@ export class ListsService {
     if (!list) {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
-
-    // Permission check is handled by ResourcePermissionGuard
 
     await this.listRepository.remove(list);
   }

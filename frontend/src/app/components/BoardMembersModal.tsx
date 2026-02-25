@@ -166,7 +166,7 @@ export default function BoardMembersModal({
                               )
                             }
                             disabled={updatingMemberId === member.id}
-                            className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="px-3 py-1 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                           >
                             <option value={BoardRole.MODERATOR}>
                               Moderator
