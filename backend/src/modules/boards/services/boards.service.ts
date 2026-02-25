@@ -2,19 +2,28 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Board } from '../entities/board.entity';
+import { BoardMember, BoardRole } from '../entities/board-member.entity';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
 import { BoardResponseDto } from '../dtos/board-response.dto';
+import { BoardWithRoleDto } from '../dtos/board-with-role.dto';
+import { BoardMemberResponseDto } from '../dtos/board-member-response.dto';
+import { UserService } from '../../users/services/user.service';
 
 @Injectable()
 export class BoardsService {
   constructor(
     @InjectRepository(Board)
     private boardRepository: Repository<Board>,
+    @InjectRepository(BoardMember)
+    private boardMemberRepository: Repository<BoardMember>,
+    private userService: UserService,
   ) {}
 
   async createBoard(
@@ -30,32 +39,72 @@ export class BoardsService {
     return this.mapToBoardResponseDto(savedBoard);
   }
 
-  async getAllUserBoards(userId: string): Promise<BoardResponseDto[]> {
-    const boards = await this.boardRepository.find({
-      where: { ownerId: userId },
-      order: { createdAt: 'DESC' },
-    });
+  async getAllUserBoards(userId: string): Promise<BoardWithRoleDto[]> {
+    const ownedBoards = await this.boardRepository
+      .createQueryBuilder('board')
+      .leftJoinAndSelect('board.members', 'member')
+      .where('board.ownerId = :userId', { userId })
+      .orderBy('board.createdAt', 'DESC')
+      .getMany();
 
-    return boards.map((board) => this.mapToBoardResponseDto(board));
+    const memberBoards = await this.boardRepository
+      .createQueryBuilder('board')
+      .leftJoinAndSelect('board.members', 'member')
+      .leftJoin('board.members', 'userMember')
+      .where('userMember.userId = :userId', { userId })
+      .andWhere('board.ownerId != :userId', { userId })
+      .orderBy('board.updatedAt', 'DESC')
+      .getMany();
+
+    const ownedBoardDtos = ownedBoards.map((board) =>
+      this.mapToBoardWithRoleDto(board, 'owner'),
+    );
+
+    // Map member boards with their respective roles
+    const memberBoardDtos = await Promise.all(
+      memberBoards.map(async (board) => {
+        const membership = await this.boardMemberRepository.findOne({
+          where: { boardId: board.id, userId },
+        });
+        return this.mapToBoardWithRoleDto(
+          board,
+          membership?.role || BoardRole.VISITOR,
+        );
+      }),
+    );
+
+    // Return owned boards first, then member boards
+    return [...ownedBoardDtos, ...memberBoardDtos];
   }
 
   async getBoardById(
     boardId: string,
     userId: string,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithRoleDto> {
     const board = await this.boardRepository.findOne({
       where: { id: boardId },
+      relations: ['members'],
     });
 
     if (!board) {
       throw new NotFoundException(`Board with ID ${boardId} not found`);
     }
 
-    if (board.ownerId !== userId) {
+    // Check if user is owner
+    if (board.ownerId === userId) {
+      return this.mapToBoardWithRoleDto(board, 'owner');
+    }
+
+    // Check if user is a member
+    const membership = await this.boardMemberRepository.findOne({
+      where: { boardId, userId },
+    });
+
+    if (!membership) {
       throw new ForbiddenException('You do not have access to this board');
     }
 
-    return this.mapToBoardResponseDto(board);
+    return this.mapToBoardWithRoleDto(board, membership.role);
   }
 
   async updateBoard(
@@ -101,6 +150,199 @@ export class BoardsService {
     await this.boardRepository.remove(board);
   }
 
+  async inviteMember(
+    boardId: string,
+    username: string,
+    role: string,
+    inviterId: string,
+  ): Promise<BoardMemberResponseDto> {
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
+
+    if (board.ownerId !== inviterId) {
+      throw new ForbiddenException('Only the board owner can invite members');
+    }
+
+    const user = await this.userService.getUserByUsername(username);
+    if (!user) {
+      throw new NotFoundException(`User with username ${username} not found`);
+    }
+
+    const existingMember = await this.boardMemberRepository.findOne({
+      where: { boardId, userId: user.id },
+    });
+
+    if (existingMember) {
+      throw new ConflictException('User is already a member of this board');
+    }
+
+    const boardMember = this.boardMemberRepository.create({
+      boardId,
+      userId: user.id,
+      role: role as any,
+    });
+
+    const savedMember = await this.boardMemberRepository.save(boardMember);
+
+    return {
+      id: savedMember.id,
+      boardId: savedMember.boardId,
+      userId: savedMember.userId,
+      role: savedMember.role,
+      createdAt: savedMember.createdAt,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        avatarUrl: user.avatarUrl || null,
+      },
+    };
+  }
+
+  async getBoardMembers(
+    boardId: string,
+    userId: string,
+  ): Promise<BoardMemberResponseDto[]> {
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+      relations: ['owner'],
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
+
+    const isMember = await this.boardMemberRepository.findOne({
+      where: { boardId, userId },
+    });
+
+    if (board.ownerId !== userId && !isMember) {
+      throw new ForbiddenException('You do not have access to this board');
+    }
+
+    const members = await this.boardMemberRepository.find({
+      where: { boardId },
+      relations: ['user'],
+      order: { createdAt: 'ASC' },
+    });
+
+    const memberDtos = members.map((member) => ({
+      id: member.id,
+      boardId: member.boardId,
+      userId: member.userId,
+      role: member.role,
+      createdAt: member.createdAt,
+      user: {
+        id: member.user.id,
+        username: member.user.username,
+        email: member.user.email,
+        avatarUrl: member.user.avatarUrl,
+      },
+    }));
+
+    // Include the owner as a "member" with role 'owner'
+    const ownerDto: BoardMemberResponseDto = {
+      id: `owner-${board.ownerId}`, // Special ID for owner
+      boardId: board.id,
+      userId: board.ownerId,
+      role: 'owner' as any,
+      createdAt: board.createdAt,
+      user: {
+        id: board.owner.id,
+        username: board.owner.username,
+        email: board.owner.email,
+        avatarUrl: board.owner.avatarUrl,
+      },
+    };
+
+    // Return owner first, then members
+    return [ownerDto, ...memberDtos];
+  }
+
+  async updateMemberRole(
+    boardId: string,
+    memberId: string,
+    newRole: string,
+    requesterId: string,
+  ): Promise<BoardMemberResponseDto> {
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
+
+    if (board.ownerId !== requesterId) {
+      throw new ForbiddenException('Only the board owner can change roles');
+    }
+
+    const member = await this.boardMemberRepository.findOne({
+      where: { id: memberId, boardId },
+      relations: ['user'],
+    });
+
+    if (!member) {
+      throw new NotFoundException('Board member not found');
+    }
+
+    member.role = newRole as any;
+    const updatedMember = await this.boardMemberRepository.save(member);
+
+    return {
+      id: updatedMember.id,
+      boardId: updatedMember.boardId,
+      userId: updatedMember.userId,
+      role: updatedMember.role,
+      createdAt: updatedMember.createdAt,
+      user: {
+        id: updatedMember.user.id,
+        username: updatedMember.user.username,
+        email: updatedMember.user.email,
+        avatarUrl: updatedMember.user.avatarUrl,
+      },
+    };
+  }
+
+  async removeMember(
+    boardId: string,
+    memberId: string,
+    requesterId: string,
+  ): Promise<void> {
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
+
+    if (board.ownerId !== requesterId) {
+      throw new ForbiddenException('Only the board owner can remove members');
+    }
+
+    const member = await this.boardMemberRepository.findOne({
+      where: { id: memberId, boardId },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Board member not found');
+    }
+
+    if (member.userId === board.ownerId) {
+      throw new BadRequestException(
+        'Cannot remove the board owner from members',
+      );
+    }
+
+    await this.boardMemberRepository.remove(member);
+  }
+
   private mapToBoardResponseDto(board: Board): BoardResponseDto {
     return {
       id: board.id,
@@ -108,6 +350,26 @@ export class BoardsService {
       description: board.description,
       thumbnail: board.thumbnail,
       ownerId: board.ownerId,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt,
+    };
+  }
+
+  private mapToBoardWithRoleDto(
+    board: Board,
+    userRole: BoardRole | 'owner',
+  ): BoardWithRoleDto {
+    // Count members: include board members + owner (1)
+    const memberCount = (board.members?.length || 0) + 1;
+
+    return {
+      id: board.id,
+      title: board.title,
+      description: board.description,
+      thumbnail: board.thumbnail,
+      ownerId: board.ownerId,
+      userRole,
+      memberCount,
       createdAt: board.createdAt,
       updatedAt: board.updatedAt,
     };

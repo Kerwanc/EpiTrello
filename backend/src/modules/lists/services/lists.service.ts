@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { List } from '../entities/list.entity';
@@ -10,6 +6,7 @@ import { Board } from '../../boards/entities/board.entity';
 import { CreateListDto } from '../dtos/create-list.dto';
 import { UpdateListDto } from '../dtos/update-list.dto';
 import { ListResponseDto } from '../dtos/list-response.dto';
+import { ListWithCardsResponseDto } from '../dtos/list-with-cards-response.dto';
 
 @Injectable()
 export class ListsService {
@@ -23,9 +20,15 @@ export class ListsService {
   async createList(
     boardId: string,
     createListDto: CreateListDto,
-    userId: string,
+    _userId: string,
   ): Promise<ListResponseDto> {
-    await this.verifyBoardOwnership(boardId, userId);
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
 
     let position = createListDto.position;
     if (position === undefined) {
@@ -49,9 +52,15 @@ export class ListsService {
 
   async getAllListsInBoard(
     boardId: string,
-    userId: string,
+    _userId: string,
   ): Promise<ListResponseDto[]> {
-    await this.verifyBoardOwnership(boardId, userId);
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+    });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
 
     const lists = await this.listRepository.find({
       where: { boardId },
@@ -61,27 +70,27 @@ export class ListsService {
     return lists.map((list) => this.mapToListResponseDto(list));
   }
 
-  async getListById(listId: string, userId: string): Promise<ListResponseDto> {
+  async getListById(
+    listId: string,
+    _userId: string,
+  ): Promise<ListWithCardsResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
-      relations: ['board'],
+      relations: ['board', 'cards', 'cards.assignedUsers'],
+      order: { cards: { position: 'ASC' } },
     });
 
     if (!list) {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this list');
-    }
-
-    return this.mapToListResponseDto(list);
+    return this.mapToListWithCardsResponseDto(list);
   }
 
   async updateList(
     listId: string,
     updateListDto: UpdateListDto,
-    userId: string,
+    _userId: string,
   ): Promise<ListResponseDto> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
@@ -92,19 +101,13 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to update this list',
-      );
-    }
-
     Object.assign(list, updateListDto);
 
     const updatedList = await this.listRepository.save(list);
     return this.mapToListResponseDto(updatedList);
   }
 
-  async deleteList(listId: string, userId: string): Promise<void> {
+  async deleteList(listId: string, _userId: string): Promise<void> {
     const list = await this.listRepository.findOne({
       where: { id: listId },
       relations: ['board'],
@@ -114,30 +117,7 @@ export class ListsService {
       throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    if (list.board.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this list',
-      );
-    }
-
     await this.listRepository.remove(list);
-  }
-
-  private async verifyBoardOwnership(
-    boardId: string,
-    userId: string,
-  ): Promise<void> {
-    const board = await this.boardRepository.findOne({
-      where: { id: boardId },
-    });
-
-    if (!board) {
-      throw new NotFoundException(`Board with ID ${boardId} not found`);
-    }
-
-    if (board.ownerId !== userId) {
-      throw new ForbiddenException('You do not have access to this board');
-    }
   }
 
   private mapToListResponseDto(list: List): ListResponseDto {
@@ -146,6 +126,33 @@ export class ListsService {
       title: list.title,
       position: list.position,
       boardId: list.boardId,
+      createdAt: list.createdAt,
+      updatedAt: list.updatedAt,
+    };
+  }
+
+  private mapToListWithCardsResponseDto(list: List): ListWithCardsResponseDto {
+    return {
+      id: list.id,
+      title: list.title,
+      position: list.position,
+      boardId: list.boardId,
+      cards: (list.cards || []).map((card) => ({
+        id: card.id,
+        title: card.title,
+        description: card.description,
+        dueDate: card.dueDate,
+        tags: card.tags,
+        position: card.position,
+        listId: card.listId,
+        assignedUsers: (card.assignedUsers || []).map((user) => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        })),
+        createdAt: card.createdAt,
+        updatedAt: card.updatedAt,
+      })),
       createdAt: list.createdAt,
       updatedAt: list.updatedAt,
     };

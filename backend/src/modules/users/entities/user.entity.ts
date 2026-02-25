@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 import { Board } from '../../boards/entities/board.entity';
+import { BoardMember } from '../../boards/entities/board-member.entity';
+import { Card } from '../../cards/entities/card.entity';
 
 @Entity('users')
 export class User {
@@ -33,4 +36,10 @@ export class User {
 
   @OneToMany(() => Board, (board) => board.owner)
   ownedBoards: Board[];
+
+  @OneToMany(() => BoardMember, (member) => member.user)
+  boardMemberships: BoardMember[];
+
+  @ManyToMany(() => Card, (card) => card.assignedUsers)
+  assignedCards: Card[];
 }

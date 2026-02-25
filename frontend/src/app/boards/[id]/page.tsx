@@ -10,10 +10,11 @@ import {
 } from '@hello-pangea/dnd';
 import { useAuth } from '../../components/AuthProvider';
 import { apiClient } from '@/lib/api-client';
-import { Board, List, Card } from '@/types';
+import { Board, List, Card, BoardRole } from '@/types';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import CardEditModal from '../../components/CardEditModal';
+import BoardMembersModal from '../../components/BoardMembersModal';
 
 interface ListWithCards extends List {
   cards: Card[];
@@ -23,7 +24,7 @@ export default function BoardDetailPage() {
   const params = useParams();
   const boardId = params?.id as string;
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [lists, setLists] = useState<ListWithCards[]>([]);
@@ -42,6 +43,7 @@ export default function BoardDetailPage() {
   });
 
   const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -372,15 +374,37 @@ export default function BoardDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-400 to-blue-600">
       <div className="bg-black/20 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">{board.title}</h1>
-            {board.description && (
-              <p className="text-white/80 text-sm mt-1">{board.description}</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white">{board.title}</h1>
+              {board.description && (
+                <p className="text-white/80 text-sm mt-1">
+                  {board.description}
+                </p>
+              )}
+            </div>
+            {board.userRole && (
+              <span className="px-3 py-1 text-xs font-semibold bg-white/20 text-white rounded-lg backdrop-blur-sm">
+                {board.userRole === BoardRole.OWNER
+                  ? 'Owner'
+                  : board.userRole === BoardRole.MODERATOR
+                    ? 'Moderator'
+                    : 'Visitor'}
+              </span>
             )}
           </div>
-          <Button variant="secondary" onClick={() => router.push('/boards')}>
-            Back to Boards
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsMembersModalOpen(true)}
+            >
+              Members {board.memberCount ? `(${board.memberCount})` : ''}
+            </Button>
+            <Button variant="secondary" onClick={() => router.push('/boards')}>
+              Back to Boards
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -495,6 +519,32 @@ export default function BoardDetailPage() {
                                             ×
                                           </button>
                                         </div>
+                                        {card.assignedUsers &&
+                                          card.assignedUsers.length > 0 && (
+                                            <div className="flex items-center gap-1 mt-2">
+                                              {card.assignedUsers
+                                                .slice(0, 3)
+                                                .map((user) => (
+                                                  <div
+                                                    key={user.id}
+                                                    className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold"
+                                                    title={user.username}
+                                                  >
+                                                    {user.username
+                                                      .charAt(0)
+                                                      .toUpperCase()}
+                                                  </div>
+                                                ))}
+                                              {card.assignedUsers.length >
+                                                3 && (
+                                                <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-semibold">
+                                                  +
+                                                  {card.assignedUsers.length -
+                                                    3}
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
                                         {card.description && (
                                           <p className="text-sm text-gray-600 mt-2">
                                             {card.description}
@@ -670,13 +720,24 @@ export default function BoardDetailPage() {
         </DragDropContext>
       </div>
 
-      {editingCard && (
+      {editingCard && board && (
         <CardEditModal
           card={editingCard}
+          boardId={boardId}
+          userRole={board.userRole}
           onClose={() => setEditingCard(null)}
           onSave={(updatedData) =>
             handleUpdateCard(editingCard.id, editingCard.listId, updatedData)
           }
+          onAssignmentsChange={fetchBoardData}
+        />
+      )}
+
+      {isMembersModalOpen && board && (
+        <BoardMembersModal
+          boardId={boardId}
+          isOwner={board.userRole === BoardRole.OWNER}
+          onClose={() => setIsMembersModalOpen(false)}
         />
       )}
     </div>

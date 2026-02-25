@@ -13,9 +13,13 @@ import {
 } from '@nestjs/common';
 import { ListsService } from '../services/lists.service';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
+import { ResourcePermissionGuard } from '../../boards/guards/resource-permission.guard';
+import { RequireBoardPermission } from '../../boards/decorators/require-board-permission.decorator';
+import { BoardPermission } from '../../boards/services/board-permission.service';
 import { CreateListDto } from '../dtos/create-list.dto';
 import { UpdateListDto } from '../dtos/update-list.dto';
 import { ListResponseDto } from '../dtos/list-response.dto';
+import { ListWithCardsResponseDto } from '../dtos/list-with-cards-response.dto';
 
 @Controller('boards/:boardId/lists')
 @UseGuards(JwtGuard)
@@ -23,6 +27,8 @@ export class ListsController {
   constructor(private listsService: ListsService) {}
 
   @Post()
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.EDIT)
   @HttpCode(HttpStatus.CREATED)
   async createList(
     @Param('boardId') boardId: string,
@@ -34,6 +40,8 @@ export class ListsController {
   }
 
   @Get()
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.VIEW)
   async getAllListsInBoard(
     @Param('boardId') boardId: string,
     @Request() req,
@@ -43,15 +51,19 @@ export class ListsController {
   }
 
   @Get(':id')
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.VIEW)
   async getListById(
     @Param('id') listId: string,
     @Request() req,
-  ): Promise<ListResponseDto> {
+  ): Promise<ListWithCardsResponseDto> {
     const userId = req.user.id;
     return this.listsService.getListById(listId, userId);
   }
 
   @Patch(':id')
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.EDIT)
   async updateList(
     @Param('id') listId: string,
     @Body() updateListDto: UpdateListDto,
@@ -62,6 +74,8 @@ export class ListsController {
   }
 
   @Delete(':id')
+  @UseGuards(ResourcePermissionGuard)
+  @RequireBoardPermission(BoardPermission.EDIT)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteList(@Param('id') listId: string, @Request() req): Promise<void> {
     const userId = req.user.id;

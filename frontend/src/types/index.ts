@@ -7,6 +7,22 @@ export interface User {
   updatedAt: string;
 }
 
+export enum BoardRole {
+  OWNER = 'owner',
+  MODERATOR = 'moderator',
+  VISITOR = 'visitor',
+}
+
+export interface BoardMember {
+  id: string;
+  boardId: string;
+  userId: string;
+  role: BoardRole;
+  user: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Board {
   id: string;
   title: string;
@@ -15,6 +31,8 @@ export interface Board {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  userRole?: BoardRole;
+  memberCount?: number;
 }
 
 export interface List {
@@ -34,8 +52,27 @@ export interface Card {
   tags: string[] | null;
   position: number;
   listId: string;
+  assignedUsers?: User[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CommentAuthor {
+  id: string;
+  username: string;
+  email: string;
+  avatarUrl: string | null;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  cardId: string;
+  authorId: string;
+  author: CommentAuthor;
+  createdAt: string;
+  updatedAt: string;
+  isEdited: boolean;
 }
 
 export interface AuthResponse {
