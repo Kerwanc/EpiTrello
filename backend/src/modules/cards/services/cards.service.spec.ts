@@ -6,6 +6,7 @@ import { List } from '../../lists/entities/list.entity';
 import { User } from '../../users/entities/user.entity';
 import { BoardMember } from '../../boards/entities/board-member.entity';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 describe('CardsService - Assignment Methods', () => {
   let service: CardsService;
@@ -27,6 +28,10 @@ describe('CardsService - Assignment Methods', () => {
     findOne: jest.fn(),
   };
 
+  const mockNotificationsService = {
+    createNotification: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -46,6 +51,10 @@ describe('CardsService - Assignment Methods', () => {
         {
           provide: getRepositoryToken(BoardMember),
           useValue: mockBoardMemberRepository,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

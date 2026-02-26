@@ -16,6 +16,8 @@ import {
   CardAssignmentResponseDto,
   UserSummaryDto,
 } from '../dtos/card-assignment-response.dto';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 @Injectable()
 export class CardsService {
@@ -28,6 +30,7 @@ export class CardsService {
     private userRepository: Repository<User>,
     @InjectRepository(BoardMember)
     private boardMemberRepository: Repository<BoardMember>,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createCard(
@@ -236,6 +239,14 @@ export class CardsService {
     card.assignedUsers.push(userToAssign);
 
     await this.cardRepository.save(card);
+
+    await this.notificationsService.createNotification(
+      userIdToAssign,
+      NotificationType.CARD_ASSIGNMENT,
+      `You have been assigned to card "${card.title}"`,
+      boardId,
+      cardId,
+    );
 
     return this.mapToCardAssignmentResponseDto(card);
   }
