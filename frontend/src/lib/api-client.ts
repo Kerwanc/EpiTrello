@@ -7,6 +7,7 @@ import {
   BoardMember,
   BoardRole,
   Comment,
+  Notification,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -354,6 +355,37 @@ class ApiClient {
         method: 'DELETE',
       },
     );
+  }
+
+  async getNotifications(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ notifications: Notification[]; total: number }> {
+    return this.request<{ notifications: Notification[]; total: number }>(
+      `/notifications?page=${page}&limit=${limit}`,
+    );
+  }
+
+  async getUnreadCount(): Promise<{ count: number }> {
+    return this.request<{ count: number }>('/notifications/unread-count');
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<Notification> {
+    return this.request<Notification>(`/notifications/${notificationId}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsAsRead(): Promise<{ updated: number }> {
+    return this.request<{ updated: number }>('/notifications/read-all', {
+      method: 'PATCH',
+    });
+  }
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    return this.request<void>(`/notifications/${notificationId}`, {
+      method: 'DELETE',
+    });
   }
 }
 

@@ -79,3 +79,20 @@ export interface AuthResponse {
   accessToken: string;
   user: User;
 }
+
+export enum NotificationType {
+  BOARD_INVITATION = 'BOARD_INVITATION',
+  CARD_ASSIGNMENT = 'CARD_ASSIGNMENT',
+  ROLE_CHANGE = 'ROLE_CHANGE',
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  message: string;
+  relatedBoardId: string | null;
+  relatedCardId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}

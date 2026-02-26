@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
 import { Button } from './Button';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -24,6 +25,7 @@ export function Navbar() {
                 >
                   Boards
                 </Link>
+                <NotificationBell />
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-700 font-bold">
                     {user?.username}
