@@ -15,6 +15,8 @@ import { BoardResponseDto } from '../dtos/board-response.dto';
 import { BoardWithRoleDto } from '../dtos/board-with-role.dto';
 import { BoardMemberResponseDto } from '../dtos/board-member-response.dto';
 import { UserService } from '../../users/services/user.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 @Injectable()
 export class BoardsService {
@@ -24,6 +26,7 @@ export class BoardsService {
     @InjectRepository(BoardMember)
     private boardMemberRepository: Repository<BoardMember>,
     private userService: UserService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createBoard(
@@ -60,7 +63,6 @@ export class BoardsService {
       this.mapToBoardWithRoleDto(board, 'owner'),
     );
 
-    // Map member boards with their respective roles
     const memberBoardDtos = await Promise.all(
       memberBoards.map(async (board) => {
         const membership = await this.boardMemberRepository.findOne({
@@ -73,7 +75,6 @@ export class BoardsService {
       }),
     );
 
-    // Return owned boards first, then member boards
     return [...ownedBoardDtos, ...memberBoardDtos];
   }
 
@@ -90,12 +91,10 @@ export class BoardsService {
       throw new NotFoundException(`Board with ID ${boardId} not found`);
     }
 
-    // Check if user is owner
     if (board.ownerId === userId) {
       return this.mapToBoardWithRoleDto(board, 'owner');
     }
 
-    // Check if user is a member
     const membership = await this.boardMemberRepository.findOne({
       where: { boardId, userId },
     });
@@ -189,6 +188,13 @@ export class BoardsService {
 
     const savedMember = await this.boardMemberRepository.save(boardMember);
 
+    await this.notificationsService.createNotification(
+      user.id,
+      NotificationType.BOARD_INVITATION,
+      `You have been invited to board "${board.title}"`,
+      boardId,
+    );
+
     return {
       id: savedMember.id,
       boardId: savedMember.boardId,
@@ -245,9 +251,8 @@ export class BoardsService {
       },
     }));
 
-    // Include the owner as a "member" with role 'owner'
     const ownerDto: BoardMemberResponseDto = {
-      id: `owner-${board.ownerId}`, // Special ID for owner
+      id: `owner-${board.ownerId}`,
       boardId: board.id,
       userId: board.ownerId,
       role: 'owner' as any,
@@ -260,7 +265,6 @@ export class BoardsService {
       },
     };
 
-    // Return owner first, then members
     return [ownerDto, ...memberDtos];
   }
 
@@ -293,6 +297,13 @@ export class BoardsService {
 
     member.role = newRole as any;
     const updatedMember = await this.boardMemberRepository.save(member);
+
+    await this.notificationsService.createNotification(
+      updatedMember.userId,
+      NotificationType.ROLE_CHANGE,
+      `Your role on board "${board.title}" has been changed to ${newRole}`,
+      boardId,
+    );
 
     return {
       id: updatedMember.id,
@@ -359,7 +370,6 @@ export class BoardsService {
     board: Board,
     userRole: BoardRole | 'owner',
   ): BoardWithRoleDto {
-    // Count members: include board members + owner (1)
     const memberCount = (board.members?.length || 0) + 1;
 
     return {

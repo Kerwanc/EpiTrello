@@ -200,6 +200,32 @@ export default function BoardDetailPage() {
     }
   };
 
+  const handleCardAssignmentsChange = async (
+    cardId: string,
+    listId: string,
+  ) => {
+    try {
+      const updatedCard = await apiClient.getCard(listId, cardId);
+
+      setLists(
+        lists.map((l) =>
+          l.id === listId
+            ? {
+                ...l,
+                cards: l.cards.map((c) => (c.id === cardId ? updatedCard : c)),
+              }
+            : l,
+        ),
+      );
+
+      if (editingCard && editingCard.id === cardId) {
+        setEditingCard(updatedCard);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to refresh card data');
+    }
+  };
+
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId, type } = result;
 
@@ -729,7 +755,9 @@ export default function BoardDetailPage() {
           onSave={(updatedData) =>
             handleUpdateCard(editingCard.id, editingCard.listId, updatedData)
           }
-          onAssignmentsChange={fetchBoardData}
+          onAssignmentsChange={() =>
+            handleCardAssignmentsChange(editingCard.id, editingCard.listId)
+          }
         />
       )}
 
