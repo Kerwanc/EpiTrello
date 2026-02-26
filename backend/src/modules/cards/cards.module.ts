@@ -10,11 +10,13 @@ import { CommentsService } from './services/comments.service';
 import { CardsController } from './controllers/cards.controller';
 import { CommentsController } from './controllers/comments.controller';
 import { BoardsModule } from '../boards/boards.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Card, Comment, List, User, BoardMember]),
     BoardsModule,
+    NotificationsModule,
   ],
   controllers: [CardsController, CommentsController],
   providers: [CardsService, CommentsService],

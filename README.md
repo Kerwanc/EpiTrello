@@ -12,18 +12,13 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Docker Setup (Recommended)](#docker-setup-recommended)
   - [Local Development](#local-development)
-- [Project Structure](#project-structure)
-- [API Documentation](#api-documentation)
 - [Environment Variables](#environment-variables)
 - [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -31,45 +26,63 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 
 - **User Authentication**
   - JWT-based authentication
-  - User registration
-  - Secure login with password hashing
+  - User registration and login
+  - Secure password hashing (bcrypt)
   - Protected routes and API endpoints
+  - Session management with JWT tokens
 
 - **Board Management**
   - Create, read, update, and delete boards
   - Board titles and descriptions
+  - Role-based access control (Owner, Moderator, Visitor)
+  - Board member management (invite, remove, change roles)
+  - Member count and list display
   - User-specific board ownership
-  - Board listing page
 
 - **List Management**
   - Create lists within boards
   - Update list titles and positions
-  - Delete lists
-  - Lists are board-specific
+  - Delete lists (cascades to cards)
+  - Drag & drop reordering of lists
 
 - **Card Management**
   - Create cards within lists
-  - Card titles and descriptions
-  - Due dates and tags support
+  - Card titles, descriptions, due dates, and tags
   - Update and delete cards
-  - Cards are list-specific
+  - Drag & drop within lists and between lists
+
+  - **Card assignments**
+  - Assign multiple users to cards
+  - User avatars displayed on assigned cards
+
+- **Comments System**
+  - Add comments to cards
+  - View all comments on a card
+  - Update and delete own comments
+  - Nested in card edit modal
+
+- **Notification System**
+  - In-app notifications for key events:
+    - Board invitations
+    - Card assignments
+    - Role changes
+  - Mark individual notifications as read
+  - Mark all notifications as read
+  - Delete notifications
 
 - **Modern UI/UX**
   - Responsive design with TailwindCSS v4
-  - Clean, intuitive interface
+  - Drag & drop with visual feedback (@hello-pangea/dnd)
   - Error handling and user feedback
-  - Good color choice, not confusing
+  - Professional color scheme
 
 ### Upcoming Features
 
-- Drag & drop for cards and lists
-- Board sharing and permissions
-- Card comments and assignments
 - Board templates
 - Search functionality
-- Real-time updates
-- User profiles and avatars
-- Responsive mobile design
+- User profiles and custom avatars
+- Email notifications
+- Mobile app
 
 ## Tech Stack
 
@@ -77,8 +90,9 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 - **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript 5
 - **Styling**: TailwindCSS v4
-- **State Management**: React Context API
 - **HTTP Client**: Fetch API with custom wrapper
+- **Drag & Drop**: @hello-pangea/dnd
+- **UI Components**: Custom components with Tailwind
 
 ### Backend
 - **Framework**: NestJS 10
@@ -87,61 +101,15 @@ A modern, full-stack Trello clone for task and project management. Built with Ne
 - **ORM**: TypeORM
 - **Authentication**: JWT (jsonwebtoken + passport-jwt)
 - **Validation**: class-validator, class-transformer
+- **Security**: bcrypt for password hashing
+- **Testing**: Jest
 
 ### DevOps
 - **Containerization**: Docker & Docker Compose
 - **Package Manager**: pnpm
 - **Version Control**: Git
-
-## Architecture
-
-```
-┌──────────────────┐
-│   Browser        │
-│ (localhost:3000) │
-└────────┬─────────┘
-         │ HTTP
-         ▼
-┌─────────────────┐
-│   Frontend      │
-│   (Next.js)     │
-│   Container     │
-└────────┬────────┘
-         │ REST API
-         ▼
-┌─────────────────┐      ┌─────────────────┐
-│   Backend       │◄────►│   PostgreSQL    │
-│   (NestJS)      │      │   Database      │
-│   Container     │      │   Container     │
-└─────────────────┘      └─────────────────┘
-```
-
-### API Endpoints
-
-#### Authentication
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - Login user
-- `GET /auth/me` - Get current user (protected)
-
-#### Boards
-- `GET /boards` - List all user boards (protected)
-- `GET /boards/:id` - Get single board (protected)
-- `POST /boards` - Create board (protected)
-- `PATCH /boards/:id` - Update board (protected)
-- `DELETE /boards/:id` - Delete board (protected)
-
-#### Lists
-- `GET /boards/:boardId/lists` - Get all lists in a board (protected)
-- `POST /boards/:boardId/lists` - Create list (protected)
-- `PATCH /boards/:boardId/lists/:id` - Update list (protected)
-- `DELETE /boards/:boardId/lists/:id` - Delete list (protected)
-
-#### Cards
-- `GET /lists/:listId/cards` - Get all cards in a list (protected)
-- `POST /lists/:listId/cards` - Create card (protected)
-- `PATCH /lists/:listId/cards/:id` - Update card (protected)
-- `DELETE /lists/:listId/cards/:id` - Delete card (protected)
-
+- **CI/CD**: GitHub Actions (lint, typecheck, tests)
+ 
 ## Getting Started
 
 ### Prerequisites
@@ -257,113 +225,6 @@ The easiest way to run EpiTrello is using Docker Compose:
 
    Frontend runs on: http://localhost:3000
 
-## Project Structure
-
-```
-repo/
-├── backend/                    # NestJS backend application
-│   ├── src/
-│   │   ├── modules/
-│   │   │   ├── auth/          # Authentication module (JWT, guards)
-│   │   │   ├── users/         # User management
-│   │   │   ├── boards/        # Board CRUD operations
-│   │   │   ├── lists/         # List CRUD operations
-│   │   │   └── cards/         # Card CRUD operations
-│   │   ├── common/            # Shared utilities, decorators
-│   │   ├── app.module.ts      # Root module
-│   │   └── main.ts            # Application entry point
-│   ├── Dockerfile
-│   └── package.json
-│
-├── frontend/                   # Next.js frontend application
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx              # Home page
-│   │   │   ├── login/page.tsx        # Login page
-│   │   │   ├── register/page.tsx     # Registration page
-│   │   │   ├── boards/
-│   │   │   │   ├── page.tsx          # Boards list
-│   │   │   │   └── [id]/page.tsx     # Single board view
-│   │   │   ├── components/
-│   │   │   │   ├── AuthProvider.tsx  # Auth context provider
-│   │   │   │   ├── Navbar.tsx        # Navigation component
-│   │   │   │   ├── Button.tsx        # Reusable button
-│   │   │   │   ├── Input.tsx         # Reusable input
-│   │   │   │   └── Card.tsx          # Reusable card
-│   │   │   └── layout.tsx            # Root layout
-│   │   ├── lib/
-│   │   │   └── api-client.ts         # API client with typed methods
-│   │   └── types/
-│   │       └── index.ts              # TypeScript interfaces
-│   ├── Dockerfile
-│   └── package.json
-│
-├── docker-compose.yml          # Docker Compose configuration
-├── README.md                   # This file
-├── Technical-Specifications-EpiTrello.md
-└── .gitignore
-```
-
-## API Documentation
-
-### Authentication Flow
-
-1. **Register**: `POST /auth/register`
-   ```json
-   {
-     "username": "user",
-     "email": "user@example.com",
-     "password": "testtest"
-   }
-   ```
-
-   Response:
-   ```json
-   {
-     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-     "user": {
-       "id": "uuid",
-       "username": "user",
-       "email": "user@example.com",
-       "createdAt": "2026-02-10T18:00:00Z",
-       "updatedAt": "2026-02-10T18:00:00Z"
-     }
-   }
-   ```
-
-2. **Login**: `POST /auth/login`
-   ```json
-   {
-     "email": "user@example.com",
-     "password": "testtest"
-   }
-   ```
-
-3. **Protected Routes**: Include JWT in Authorization header
-   ```
-   Authorization: Bearer <your-jwt-token>
-   ```
-
-### Error Responses
-
-The API returns consistent error responses:
-
-```json
-{
-  "message": "Error description",
-  "error": "Error type",
-  "statusCode": 400
-}
-```
-
-Common status codes:
-- `400` - Bad Request (validation error)
-- `401` - Unauthorized (invalid credentials or missing token)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not Found
-- `409` - Conflict (e.g., email already exists)
-- `500` - Internal Server Error
-
 ## Environment Variables
 
 ### Backend
@@ -402,71 +263,4 @@ pnpm run test:e2e
 
 # Test coverage
 pnpm run test:cov
-```
-
-### Frontend Tests
-
-```bash
-cd frontend
-
-# Run tests
-pnpm run test
-
-# Watch mode
-pnpm run test:watch
-```
-
-## Database Schema
-
-### Users Table
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username VARCHAR(255) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  avatar_url VARCHAR(500),
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Boards Table
-```sql
-CREATE TABLE boards (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  thumbnail VARCHAR(500),
-  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Lists Table
-```sql
-CREATE TABLE lists (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
-  position INTEGER NOT NULL,
-  board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Cards Table
-```sql
-CREATE TABLE cards (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  due_date TIMESTAMP,
-  tags TEXT[],
-  position INTEGER NOT NULL,
-  list_id UUID NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
 ```

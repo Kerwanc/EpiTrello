@@ -11,6 +11,7 @@ import { BoardMember } from '../entities/board-member.entity';
 import { CreateBoardDto } from '../dtos/create-board.dto';
 import { UpdateBoardDto } from '../dtos/update-board.dto';
 import { UserService } from '../../users/services/user.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 describe('BoardsService', () => {
   let boardsService: BoardsService;
@@ -47,6 +48,10 @@ describe('BoardsService', () => {
     getUserByUsername: jest.fn(),
   };
 
+  const mockNotificationsService = {
+    createNotification: jest.fn(),
+  };
+
   const mockBoard: Board = {
     id: 'board-uuid-123',
     title: 'Test Board',
@@ -78,6 +83,10 @@ describe('BoardsService', () => {
         {
           provide: UserService,
           useValue: mockUserService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

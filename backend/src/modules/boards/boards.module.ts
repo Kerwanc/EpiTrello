@@ -10,11 +10,13 @@ import { BoardsController } from './controllers/boards.controller';
 import { BoardPermissionGuard } from './guards/board-permission.guard';
 import { ResourcePermissionGuard } from './guards/resource-permission.guard';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Board, BoardMember, List, Card]),
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [BoardsController],
   providers: [
