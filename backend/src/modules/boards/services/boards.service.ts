@@ -252,7 +252,7 @@ export class BoardsService {
     }));
 
     const ownerDto: BoardMemberResponseDto = {
-      id: `owner-${board.ownerId}`, // Special ID for owner
+      id: `owner-${board.ownerId}`,
       boardId: board.id,
       userId: board.ownerId,
       role: 'owner' as any,

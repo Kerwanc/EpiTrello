@@ -179,6 +179,10 @@ class ApiClient {
     return this.request<Card[]>(`/lists/${listId}/cards`);
   }
 
+  async getCard(listId: string, cardId: string): Promise<Card> {
+    return this.request<Card>(`/lists/${listId}/cards/${cardId}`);
+  }
+
   async createCard(
     listId: string,
     data: {
