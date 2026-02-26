@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { BoardsModule } from './modules/boards/boards.module';
 import { ListsModule } from './modules/lists/lists.module';
 import { CardsModule } from './modules/cards/cards.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { User } from './modules/users/entities/user.entity';
 import { Board } from './modules/boards/entities/board.entity';
 import { BoardMember } from './modules/boards/entities/board-member.entity';
@@ -33,6 +34,7 @@ import { Notification } from './modules/notifications/entities/notification.enti
     BoardsModule,
     ListsModule,
     CardsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
